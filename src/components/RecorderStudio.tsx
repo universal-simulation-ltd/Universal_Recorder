@@ -14,6 +14,15 @@ const SOURCES: { id: SourceMode; label: string; blurb: string; icon: string }[] 
 
 const FORMATS: ExportFormat[] = ['webm', 'mp3', 'wav']
 
+// Mobile browsers don't support system-audio capture (`getDisplayMedia` audio),
+// so those sources are unavailable there — only the microphone can be recorded.
+function isMobileBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const uaData = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData
+  if (uaData && typeof uaData.mobile === 'boolean') return uaData.mobile
+  return /Android|iPhone|iPad|iPod|IEMobile|BlackBerry|Opera Mini|Mobile|Silk/i.test(navigator.userAgent)
+}
+
 function fmtTime(sec: number): string {
   const s = Math.floor(sec)
   const m = Math.floor(s / 60)
@@ -36,6 +45,8 @@ function download(blob: Blob, filename: string) {
 }
 
 export default function RecorderStudio() {
+  const [isMobile] = useState(isMobileBrowser)
+  const sources = isMobile ? SOURCES.filter(s => s.id === 'mic') : SOURCES
   const [mode, setMode] = useState<SourceMode>('mic')
   const [mics, setMics] = useState<MediaDeviceInfo[]>([])
   const [micId, setMicId] = useState<string>('')
@@ -174,8 +185,8 @@ export default function RecorderStudio() {
       </header>
 
       {/* Source picker */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-        {SOURCES.map(s => {
+      <section className={`grid grid-cols-1 gap-3 mb-4 ${isMobile ? '' : 'sm:grid-cols-3'}`}>
+        {sources.map(s => {
           const active = mode === s.id
           return (
             <button
@@ -220,7 +231,14 @@ export default function RecorderStudio() {
         </div>
       )}
 
-      {mode !== 'mic' && (
+      {isMobile && (
+        <p className="mb-4 text-xs text-slate-500">
+          On mobile, only microphone recording is available — system-audio capture isn’t supported by
+          mobile browsers.
+        </p>
+      )}
+
+      {!isMobile && mode !== 'mic' && (
         <p className="mb-4 text-xs text-slate-500">
           System audio needs Chrome or Edge — when the share picker opens, choose a tab or screen and
           tick <strong>Share audio</strong>. Safari and Firefox restrict it.
