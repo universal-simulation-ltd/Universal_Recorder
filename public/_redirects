@@ -1,0 +1,27 @@
+# Cloudflare Pages rewrites — Universal Recorder is served under /recorder/
+# but the built files in dist/ are flat (Vite's `base` only rewrites URLs INSIDE
+# the HTML; it does not place files in dist/recorder/).
+#
+# 200 status = transparent rewrite (URL bar unchanged). Specific rules first,
+# broad SPA fallback last.
+
+# Service-worker + PWA artefacts.
+/recorder/sw.js                /sw.js                200
+/recorder/registerSW.js        /registerSW.js        200
+/recorder/manifest.webmanifest /manifest.webmanifest 200
+/recorder/workbox-*            /workbox-:splat       200
+
+# Hashed asset bundles.
+/recorder/assets/*             /assets/:splat        200
+
+# Static files referenced from index.html / app code (BASE_URL-prefixed).
+/recorder/favicon.svg          /favicon.svg          200
+/recorder/unisim-icon.png      /unisim-icon.png      200
+/recorder/og-image.png         /og-image.png         200
+
+# SEO crawler files.
+/recorder/robots.txt           /robots.txt           200
+/recorder/sitemap.xml          /sitemap.xml          200
+
+# SPA fallback — everything else under /recorder/ serves the shell.
+/recorder/*                    /index.html           200

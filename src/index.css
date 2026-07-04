@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+html, body { height: 100%; margin: 0; }
+#root { min-height: 100%; }
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Pulsing red dot while recording. */
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.rec-dot { animation: rec-pulse 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .rec-dot { animation: none; }
+}
