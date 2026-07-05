@@ -3,11 +3,11 @@
 # Git-connected), so this workflow does the `wrangler pages deploy` that would
 # otherwise be a manual step.
 #
-# One-time setup: add two repository secrets (Settings → Secrets → Actions):
-#   CLOUDFLARE_API_TOKEN   — a token with the "Cloudflare Pages: Edit" permission
-#   CLOUDFLARE_ACCOUNT_ID  — the UNI SIM Cloudflare account id
-# Until those exist the deploy step is skipped (the run stays green), so adding
-# this file is safe.
+# Auth: a CLOUDFLARE_API_TOKEN repo (or org) secret — the same token the
+# opensource portal / assess-router deploys use. It carries "Cloudflare Pages:
+# Edit" and "User Details: Read", so wrangler resolves the account on its own.
+# Do NOT also pass CLOUDFLARE_ACCOUNT_ID: if the secret is unset it becomes an
+# empty string and wrangler uses it literally, hitting /accounts// and failing.
 name: Deploy to Cloudflare Pages
 
 on:
@@ -18,9 +18,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents:    read
+      deployments: write
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,4 +32,8 @@ jobs:
       - run: npm run build
       - name: Deploy to Cloudflare Pages
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
-        run: npx wrangler pages deploy dist --project-name=universal-recorder --branch main
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken:        ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: '4'
+          command:         pages deploy dist --project-name=universal-recorder --branch=main
