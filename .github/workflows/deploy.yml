@@ -4,10 +4,12 @@
 # otherwise be a manual step.
 #
 # Auth: a CLOUDFLARE_API_TOKEN repo (or org) secret — the same token the
-# opensource portal / assess-router deploys use. It carries "Cloudflare Pages:
-# Edit" and "User Details: Read", so wrangler resolves the account on its own.
-# Do NOT also pass CLOUDFLARE_ACCOUNT_ID: if the secret is unset it becomes an
-# empty string and wrangler uses it literally, hitting /accounts// and failing.
+# opensource portal / assess-router deploys use (carries "Cloudflare Pages:
+# Edit"). Unlike `wrangler deploy` (Workers), `wrangler pages deploy` can't
+# resolve the account from this token on its own, so we pass the account id
+# explicitly. It's the org's public Cloudflare account id, already committed in
+# opensource-portal/wrangler.jsonc and uni_sim_website/wrangler.jsonc — not a
+# secret (account ids appear in dashboard URLs).
 name: Deploy to Cloudflare Pages
 
 on:
@@ -35,5 +37,6 @@ jobs:
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken:        ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId:       12fb850ff7cd52f3ef0244b1837e3008
           wranglerVersion: '4'
           command:         pages deploy dist --project-name=universal-recorder --branch=main
