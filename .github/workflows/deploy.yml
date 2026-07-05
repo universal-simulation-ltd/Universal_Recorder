@@ -1,0 +1,33 @@
+# Auto-deploy Universal Recorder to its Cloudflare Pages project on every merge
+# to main. The Pages project `universal-recorder` is Direct-Upload (not
+# Git-connected), so this workflow does the `wrangler pages deploy` that would
+# otherwise be a manual step.
+#
+# One-time setup: add two repository secrets (Settings → Secrets → Actions):
+#   CLOUDFLARE_API_TOKEN   — a token with the "Cloudflare Pages: Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID  — the UNI SIM Cloudflare account id
+# Until those exist the deploy step is skipped (the run stays green), so adding
+# this file is safe.
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy to Cloudflare Pages
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
+        run: npx wrangler pages deploy dist --project-name=universal-recorder --branch main
