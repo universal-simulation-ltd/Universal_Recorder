@@ -8,7 +8,7 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-100">
       <UniversalAppsNavBar
-        product={'recorder' as never}
+        product="recorder"
         productLogo={<ProductLogo />}
         productHomeHref={import.meta.env.BASE_URL}
         suiteSwitcherIconSrc={`${import.meta.env.BASE_URL}unisim-icon.png`}
