@@ -1,12 +1,16 @@
-// Capture engine. Every mode routes through one Web Audio graph
+// Capture engine. Any combination of {microphone, system audio, screen} can be
+// recorded at once. Audio routes through one Web Audio graph
 //   sources → gain → analyser → MediaStreamDestination
-// so metering and the recorded stream stay in sync, and "both" is a real mix of
-// microphone + system audio into a single track. Recording uses MediaRecorder
-// (WebM/Opus); nothing leaves the browser.
-import type { RecordingBlobResult, SourceMode } from './types'
+// so metering and the recorded audio stay in sync, and mic + system audio become
+// a real mix in a single track. When "screen" is chosen the screen video track is
+// muxed in alongside that audio. Recording uses MediaRecorder (WebM); nothing
+// leaves the browser.
+import type { RecordingBlobResult, Source } from './types'
 
-function pickMime(): string {
-  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus']
+function pickMime(hasVideo: boolean): string {
+  const candidates = hasVideo
+    ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+    : ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus']
   for (const c of candidates) {
     if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(c)) return c
   }
@@ -21,9 +25,13 @@ export async function listMicrophones(): Promise<MediaDeviceInfo[]> {
 }
 
 export interface StartOptions {
-  mode: SourceMode
+  sources: Source[]
   deviceId?: string
   onLevel?: (level: number) => void
+  /** Fired if a shared stream ends on its own (the browser's "Stop sharing"). */
+  onEnded?: () => void
+  /** Non-fatal notice, e.g. system audio wasn't shared but we started anyway. */
+  onWarning?: (message: string) => void
 }
 
 export class AudioRecorder {
@@ -34,7 +42,10 @@ export class AudioRecorder {
   private analyser?: AnalyserNode
   private raf = 0
   private onLevel?: (n: number) => void
+  private onEnded?: () => void
+  private endedFired = false
   private mime = ''
+  private hasVideo = false
   private startedAt = 0
   private pausedAt = 0
   private pausedTotal = 0
@@ -42,7 +53,17 @@ export class AudioRecorder {
   get mimeType(): string { return this.mime }
 
   async start(opts: StartOptions): Promise<void> {
+    const wantMic = opts.sources.includes('mic')
+    const wantSystem = opts.sources.includes('system')
+    const wantScreen = opts.sources.includes('screen')
+    if (!wantMic && !wantSystem && !wantScreen) {
+      throw new Error('Choose at least one source to record.')
+    }
+
     this.onLevel = opts.onLevel
+    this.onEnded = opts.onEnded
+    this.endedFired = false
+
     const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     const ctx = new Ctor()
     this.ctx = ctx
@@ -53,41 +74,90 @@ export class AudioRecorder {
     analyser.connect(destination)
     this.analyser = analyser
 
-    const addSource = (stream: MediaStream) => {
-      stream.getTracks().forEach(t => this.tracks.push(t))
+    let audioConnected = false
+    const addAudio = (stream: MediaStream) => {
+      stream.getTracks().forEach(t => this.trackForCleanup(t))
       const src = ctx.createMediaStreamSource(stream)
       src.connect(analyser)
+      audioConnected = true
     }
 
-    // Microphone
-    if (opts.mode === 'mic' || opts.mode === 'both') {
-      const mic = await navigator.mediaDevices.getUserMedia({
-        audio: opts.deviceId ? { deviceId: { exact: opts.deviceId } } : true,
-      })
-      addSource(mic)
-    }
-    // System audio — Chrome only offers a tab/system audio track when video is
-    // requested; we keep the audio and drop the video track immediately.
-    if (opts.mode === 'system' || opts.mode === 'both') {
-      const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-      const audio = display.getAudioTracks()
-      display.getVideoTracks().forEach(t => t.stop())
-      if (audio.length === 0) {
-        this.cleanup()
-        throw new Error('No system audio was shared. When the picker opens, choose a tab or screen and tick "Share audio".')
+    let videoTrack: MediaStreamTrack | undefined
+
+    try {
+      // Microphone
+      if (wantMic) {
+        const mic = await navigator.mediaDevices.getUserMedia({
+          audio: opts.deviceId ? { deviceId: { exact: opts.deviceId } } : true,
+        })
+        addAudio(mic)
       }
-      addSource(new MediaStream(audio))
+
+      // Screen video and/or system audio come from one getDisplayMedia prompt.
+      // Chrome only exposes a system/tab audio track when video is also requested,
+      // so we request video even for system-audio-only and drop it afterwards.
+      if (wantSystem || wantScreen) {
+        const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: wantSystem })
+        const vids = display.getVideoTracks()
+        const auds = display.getAudioTracks()
+
+        if (wantScreen && vids.length > 0) {
+          videoTrack = vids[0]
+          this.trackForCleanup(videoTrack)
+          vids.slice(1).forEach(t => t.stop())
+          this.hasVideo = true
+        } else {
+          vids.forEach(t => t.stop())
+        }
+
+        if (wantSystem && auds.length > 0) {
+          addAudio(new MediaStream(auds))
+        } else if (wantSystem) {
+          // No system-audio track came back (the picker's "Share audio" wasn't
+          // ticked, or this source can't share audio).
+          if (!wantScreen && !audioConnected) {
+            this.cleanup()
+            throw new Error('No audio was shared. When the picker opens, choose a tab or screen and tick “Share audio”.')
+          }
+          opts.onWarning?.('System audio wasn’t shared, so it isn’t included — tick “Share audio” in the picker next time.')
+        } else {
+          auds.forEach(t => t.stop())
+        }
+      }
+    } catch (err) {
+      // A permission denial / cancelled picker leaves the graph half-built.
+      this.cleanup()
+      throw err
     }
 
     await ctx.resume()
-    this.mime = pickMime()
-    this.recorder = new MediaRecorder(destination.stream, this.mime ? { mimeType: this.mime } : undefined)
+    this.mime = pickMime(this.hasVideo)
+
+    // The recorded stream = the screen video (if any) + the single mixed audio
+    // track from the graph (only when something was actually connected).
+    const recordedTracks: MediaStreamTrack[] = []
+    if (videoTrack) recordedTracks.push(videoTrack)
+    if (audioConnected) recordedTracks.push(...destination.stream.getAudioTracks())
+    const recordStream = new MediaStream(recordedTracks)
+
+    // If the user stops sharing via the browser bar, end the recording cleanly.
+    recordedTracks.forEach(t => t.addEventListener('ended', this.handleTrackEnded))
+
+    this.recorder = new MediaRecorder(recordStream, this.mime ? { mimeType: this.mime } : undefined)
     this.chunks = []
     this.recorder.ondataavailable = e => { if (e.data.size > 0) this.chunks.push(e.data) }
     this.recorder.start(250)
     this.startedAt = performance.now()
     this.pausedTotal = 0
     this.meter()
+  }
+
+  private trackForCleanup(t: MediaStreamTrack) { this.tracks.push(t) }
+
+  private handleTrackEnded = () => {
+    if (this.endedFired) return
+    this.endedFired = true
+    this.onEnded?.()
   }
 
   private meter = () => {
@@ -131,17 +201,28 @@ export class AudioRecorder {
     const durationSec = this.elapsedSec()
     const rec = this.recorder
     if (!rec) throw new Error('Not recording')
+    const fallback = this.hasVideo ? 'video/webm' : 'audio/webm'
     const blob: Blob = await new Promise(resolve => {
-      rec.onstop = () => resolve(new Blob(this.chunks, { type: this.mime || 'audio/webm' }))
+      // A shared stream ending on its own (browser "Stop sharing") auto-stops the
+      // recorder — by the time we're here it's already inactive with its final
+      // chunk buffered, so build straight from the chunks instead of re-stopping.
+      if (rec.state === 'inactive') {
+        resolve(new Blob(this.chunks, { type: this.mime || fallback }))
+        return
+      }
+      rec.onstop = () => resolve(new Blob(this.chunks, { type: this.mime || fallback }))
       rec.stop()
     })
     this.cleanup()
-    return { blob, mimeType: this.mime || 'audio/webm', durationSec }
+    return { blob, mimeType: this.mime || fallback, durationSec, hasVideo: this.hasVideo }
   }
 
   private cleanup(): void {
     cancelAnimationFrame(this.raf)
-    this.tracks.forEach(t => t.stop())
+    this.tracks.forEach(t => {
+      t.removeEventListener('ended', this.handleTrackEnded)
+      t.stop()
+    })
     this.tracks = []
     if (this.ctx && this.ctx.state !== 'closed') void this.ctx.close()
     this.ctx = undefined
