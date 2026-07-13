@@ -308,6 +308,10 @@ export default function RecorderStudio() {
         <p className="mb-4 text-xs text-slate-500">
           When the share picker opens, choose a tab, window or screen
           {sources.includes('system') && <> and tick <strong>Share audio</strong> to include system audio</>}.
+          {sources.includes('system') && !sources.includes('screen') && (
+            <> Chrome needs you to pick a screen or tab to grant audio — the screen itself isn’t recorded,
+            only the sound.</>
+          )}
         </p>
       )}
 
@@ -376,8 +380,11 @@ export default function RecorderStudio() {
         <section className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-semibold text-slate-900">Your recording — {fmtTime(current.durationSec)}</h2>
-            <button onClick={handleNew} className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              + New recording
+            <button
+              onClick={handleNew}
+              className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-500"
+            >
+              ＋ New recording
             </button>
           </div>
           {currentUrl && (current.hasVideo
