@@ -123,7 +123,7 @@ export default function RecorderStudio() {
     if (s.id === 'screen' && !canScreen) return { ...s, disabled: true, note: 'Not supported here' }
     return { ...s, disabled: false as boolean, note: undefined as string | undefined }
   })
-  const [sources, setSources] = useState<Source[]>(['mic'])
+  const [sources, setSources] = useState<Source[]>([])
   const [mics, setMics] = useState<MediaDeviceInfo[]>([])
   const [micId, setMicId] = useState<string>('')
   const [surface, setSurface] = useState<'monitor' | 'window' | 'browser'>('monitor')
@@ -398,7 +398,12 @@ export default function RecorderStudio() {
         </p>
       )}
 
-      {/* Transport */}
+      {/* Transport — only once a source is chosen */}
+      {sources.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-6 text-center text-sm text-slate-500">
+          Choose at least one source above to start recording.
+        </p>
+      ) : (
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-center gap-3">
           <span
@@ -457,6 +462,7 @@ export default function RecorderStudio() {
         {warning && <p className="mt-4 text-sm text-amber-700">{warning}</p>}
         {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
       </section>
+      )}
 
       {/* Result */}
       {status === 'done' && current && (
