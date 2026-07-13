@@ -38,6 +38,19 @@ function isMobileBrowser(): boolean {
   return /Android|iPhone|iPad|iPod|IEMobile|BlackBerry|Opera Mini|Mobile|Silk/i.test(navigator.userAgent)
 }
 
+// Screen *video* capture works wherever getDisplayMedia exists (incl. Firefox).
+function screenSupported(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.mediaDevices?.getDisplayMedia === 'function'
+}
+
+// Capturing system/tab *audio* via getDisplayMedia is a Chromium-only capability —
+// Firefox and Safari ignore the audio constraint (there's no "Share audio" option
+// in their picker), so no track ever comes back. `userAgentData` is Chromium-only,
+// which is a reliable positive signal for the browsers that support this.
+function systemAudioSupported(): boolean {
+  return screenSupported() && 'userAgentData' in navigator
+}
+
 function fmtTime(sec: number): string {
   const s = Math.floor(sec)
   const m = Math.floor(s / 60)
@@ -61,7 +74,14 @@ function download(blob: Blob, filename: string) {
 
 export default function RecorderStudio() {
   const [isMobile] = useState(isMobileBrowser)
-  const sourceOptions = isMobile ? SOURCES.filter(s => s.id === 'mic') : SOURCES
+  const [canSystemAudio] = useState(systemAudioSupported)
+  const [canScreen] = useState(screenSupported)
+  // Which cards to show, and why any are unavailable in this browser.
+  const sourceOptions = (isMobile ? SOURCES.filter(s => s.id === 'mic') : SOURCES).map(s => {
+    if (s.id === 'system' && !canSystemAudio) return { ...s, disabled: true, note: 'Chrome or Edge only' }
+    if (s.id === 'screen' && !canScreen) return { ...s, disabled: true, note: 'Not supported here' }
+    return { ...s, disabled: false as boolean, note: undefined as string | undefined }
+  })
   const [sources, setSources] = useState<Source[]>(['mic'])
   const [mics, setMics] = useState<MediaDeviceInfo[]>([])
   const [micId, setMicId] = useState<string>('')
@@ -217,17 +237,19 @@ export default function RecorderStudio() {
       {/* Source picker — pick any combination */}
       <section className={`grid grid-cols-1 gap-3 mb-2 ${isMobile ? '' : 'sm:grid-cols-3'}`}>
         {sourceOptions.map(s => {
-          const active = sources.includes(s.id)
+          const active = sources.includes(s.id) && !s.disabled
           return (
             <button
               key={s.id}
               type="button"
-              onClick={() => !live && toggleSource(s.id)}
-              disabled={live}
+              onClick={() => !live && !s.disabled && toggleSource(s.id)}
+              disabled={live || s.disabled}
               role="checkbox"
               aria-checked={active}
+              title={s.disabled ? s.note : undefined}
               className={[
-                'relative text-left rounded-xl border p-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed',
+                'relative text-left rounded-xl border p-4 transition-colors disabled:cursor-not-allowed',
+                s.disabled ? 'opacity-50' : 'disabled:opacity-60',
                 active
                   ? 'border-orange-500 bg-orange-50/60 ring-1 ring-orange-500/30'
                   : 'border-slate-200 bg-white hover:border-orange-300',
@@ -245,6 +267,9 @@ export default function RecorderStudio() {
               <div className="text-2xl">{s.icon}</div>
               <div className="mt-1 font-semibold text-slate-900">{s.label}</div>
               <div className="text-xs text-slate-500">{s.blurb}</div>
+              {s.disabled && s.note && (
+                <div className="mt-1 text-[11px] font-medium text-amber-600">{s.note}</div>
+              )}
             </button>
           )
         })}
@@ -281,9 +306,8 @@ export default function RecorderStudio() {
 
       {!isMobile && usesDisplay && (
         <p className="mb-4 text-xs text-slate-500">
-          System audio &amp; screen capture need Chrome or Edge — when the share picker opens, choose a
-          tab, window or screen{sources.includes('system') && <> and tick <strong>Share audio</strong></>}.
-          Safari and Firefox restrict this.
+          When the share picker opens, choose a tab, window or screen
+          {sources.includes('system') && <> and tick <strong>Share audio</strong> to include system audio</>}.
         </p>
       )}
 
