@@ -2,20 +2,35 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AudioRecorder, listMicrophones } from '../lib/recorder'
 import { FORMAT_META, toFormat } from '../lib/encode'
 import { deleteRecording, listRecordings, saveRecording } from '../lib/localRecordings'
-import type { ExportFormat, SourceMode, StoredRecording } from '../lib/types'
+import type { ExportFormat, Source, StoredRecording } from '../lib/types'
 
 type Status = 'idle' | 'recording' | 'paused' | 'done'
 
-const SOURCES: { id: SourceMode; label: string; blurb: string; icon: string }[] = [
-  { id: 'mic',    label: 'Microphone',    blurb: 'Your voice / mic input',        icon: '🎙️' },
-  { id: 'system', label: 'System audio',  blurb: 'What is playing on this device', icon: '🔊' },
-  { id: 'both',   label: 'Both (mixed)',  blurb: 'Mic + system in one track',      icon: '🎧' },
+const SOURCES: { id: Source; label: string; blurb: string; icon: string }[] = [
+  { id: 'mic',    label: 'Microphone',   blurb: 'Your voice / mic input',         icon: '🎙️' },
+  { id: 'system', label: 'System audio', blurb: 'What is playing on this device',  icon: '🔊' },
+  { id: 'screen', label: 'Screen',       blurb: 'Record your screen as video',     icon: '🖥️' },
 ]
 
-const FORMATS: ExportFormat[] = ['webm', 'mp3', 'wav']
+const AUDIO_FORMATS: ExportFormat[] = ['webm', 'mp3', 'wav']
 
-// Mobile browsers don't support system-audio capture (`getDisplayMedia` audio),
-// so those sources are unavailable there — only the microphone can be recorded.
+// Which download formats apply to a recording. A screen capture has a video
+// track, so only the native WebM passes through; MP3/WAV are audio-only.
+function formatsFor(rec: StoredRecording): ExportFormat[] {
+  return rec.hasVideo ? ['webm'] : AUDIO_FORMATS
+}
+
+// Human label for a recording's sources, tolerant of older records that stored a
+// single `source` string ('mic' | 'system' | 'both') before multi-select.
+function sourceLabels(rec: StoredRecording): string {
+  const legacy = (rec as unknown as { source?: string }).source
+  const list: Source[] =
+    rec.sources ?? (legacy === 'both' ? ['mic', 'system'] : legacy ? [legacy as Source] : [])
+  return list.map(s => SOURCES.find(x => x.id === s)?.label ?? s).join(' + ') || '—'
+}
+
+// Mobile browsers don't support system-audio or screen capture (`getDisplayMedia`),
+// so only the microphone can be recorded there.
 function isMobileBrowser(): boolean {
   if (typeof navigator === 'undefined') return false
   const uaData = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData
@@ -46,14 +61,15 @@ function download(blob: Blob, filename: string) {
 
 export default function RecorderStudio() {
   const [isMobile] = useState(isMobileBrowser)
-  const sources = isMobile ? SOURCES.filter(s => s.id === 'mic') : SOURCES
-  const [mode, setMode] = useState<SourceMode>('mic')
+  const sourceOptions = isMobile ? SOURCES.filter(s => s.id === 'mic') : SOURCES
+  const [sources, setSources] = useState<Source[]>(['mic'])
   const [mics, setMics] = useState<MediaDeviceInfo[]>([])
   const [micId, setMicId] = useState<string>('')
   const [status, setStatus] = useState<Status>('idle')
   const [level, setLevel] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [warning, setWarning] = useState<string | null>(null)
   const [current, setCurrent] = useState<StoredRecording | null>(null)
   const [currentUrl, setCurrentUrl] = useState<string | null>(null)
   const [recents, setRecents] = useState<StoredRecording[]>([])
@@ -86,12 +102,24 @@ export default function RecorderStudio() {
     }, 200)
   }
 
+  function toggleSource(id: Source) {
+    setSources(prev => (prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]))
+  }
+
   async function handleStart() {
     setError(null)
+    setWarning(null)
+    if (sources.length === 0) { setError('Choose at least one source to record.'); return }
     const rec = new AudioRecorder()
     recorderRef.current = rec
     try {
-      await rec.start({ mode, deviceId: micId || undefined, onLevel: setLevel })
+      await rec.start({
+        sources,
+        deviceId: micId || undefined,
+        onLevel: setLevel,
+        onWarning: setWarning,
+        onEnded: () => { if (recorderRef.current) void handleStop() },
+      })
       setStatus('recording')
       setElapsed(0)
       startTick()
@@ -101,7 +129,7 @@ export default function RecorderStudio() {
       const msg = (err as Error).message || 'Could not start recording.'
       setError(
         (err as Error).name === 'NotAllowedError'
-          ? 'Permission denied. Allow microphone / screen-audio access and try again.'
+          ? 'Permission denied. Allow microphone / screen access and try again.'
           : msg,
       )
     }
@@ -113,6 +141,7 @@ export default function RecorderStudio() {
   async function handleStop() {
     const rec = recorderRef.current
     if (!rec) return
+    recorderRef.current = null // claim it so a concurrent onEnded/Stop can't double-run
     stopTick()
     setLevel(0)
     try {
@@ -123,7 +152,8 @@ export default function RecorderStudio() {
         createdAt: Date.now(),
         durationSec: result.durationSec,
         mimeType: result.mimeType,
-        source: mode,
+        sources,
+        hasVideo: result.hasVideo,
         blob: result.blob,
       }
       setCurrent(stored)
@@ -134,8 +164,6 @@ export default function RecorderStudio() {
     } catch (err) {
       setError((err as Error).message || 'Could not finish the recording.')
       setStatus('idle')
-    } finally {
-      recorderRef.current = null
     }
   }
 
@@ -144,6 +172,7 @@ export default function RecorderStudio() {
     if (currentUrl) URL.revokeObjectURL(currentUrl)
     setCurrentUrl(null)
     setElapsed(0)
+    setWarning(null)
     setStatus('idle')
   }
 
@@ -170,38 +199,49 @@ export default function RecorderStudio() {
   const recording = status === 'recording'
   const paused = status === 'paused'
   const live = recording || paused
-  const needsMic = mode === 'mic' || mode === 'both'
+  const needsMic = sources.includes('mic')
+  const usesDisplay = sources.includes('system') || sources.includes('screen')
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
       <header className="mb-7">
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-          Record audio that <span className="text-orange-600">stays on your device</span>.
+          Record audio &amp; screen that <span className="text-orange-600">stays on your device</span>.
         </h1>
         <p className="mt-3 text-slate-600 max-w-xl">
-          Capture your microphone, your system audio, or both — then save it as WebM, MP3 or WAV.
-          Nothing is uploaded.
+          Capture your microphone, your system audio and your screen — pick any combination — then
+          save it. Nothing is uploaded.
         </p>
       </header>
 
-      {/* Source picker */}
-      <section className={`grid grid-cols-1 gap-3 mb-4 ${isMobile ? '' : 'sm:grid-cols-3'}`}>
-        {sources.map(s => {
-          const active = mode === s.id
+      {/* Source picker — pick any combination */}
+      <section className={`grid grid-cols-1 gap-3 mb-2 ${isMobile ? '' : 'sm:grid-cols-3'}`}>
+        {sourceOptions.map(s => {
+          const active = sources.includes(s.id)
           return (
             <button
               key={s.id}
               type="button"
-              onClick={() => !live && setMode(s.id)}
+              onClick={() => !live && toggleSource(s.id)}
               disabled={live}
-              aria-pressed={active}
+              role="checkbox"
+              aria-checked={active}
               className={[
-                'text-left rounded-xl border p-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed',
+                'relative text-left rounded-xl border p-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed',
                 active
                   ? 'border-orange-500 bg-orange-50/60 ring-1 ring-orange-500/30'
                   : 'border-slate-200 bg-white hover:border-orange-300',
               ].join(' ')}
             >
+              <span
+                className={[
+                  'absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded border text-[11px] font-bold',
+                  active ? 'border-orange-500 bg-orange-500 text-white' : 'border-slate-300 text-transparent',
+                ].join(' ')}
+                aria-hidden="true"
+              >
+                ✓
+              </span>
               <div className="text-2xl">{s.icon}</div>
               <div className="mt-1 font-semibold text-slate-900">{s.label}</div>
               <div className="text-xs text-slate-500">{s.blurb}</div>
@@ -209,6 +249,7 @@ export default function RecorderStudio() {
           )
         })}
       </section>
+      <p className="mb-4 text-xs text-slate-500">Tip: tick more than one to record them together.</p>
 
       {/* Mic device picker */}
       {needsMic && (
@@ -233,15 +274,16 @@ export default function RecorderStudio() {
 
       {isMobile && (
         <p className="mb-4 text-xs text-slate-500">
-          On mobile, only microphone recording is available — system-audio capture isn’t supported by
-          mobile browsers.
+          On mobile, only microphone recording is available — system-audio and screen capture aren’t
+          supported by mobile browsers.
         </p>
       )}
 
-      {!isMobile && mode !== 'mic' && (
+      {!isMobile && usesDisplay && (
         <p className="mb-4 text-xs text-slate-500">
-          System audio needs Chrome or Edge — when the share picker opens, choose a tab or screen and
-          tick <strong>Share audio</strong>. Safari and Firefox restrict it.
+          System audio &amp; screen capture need Chrome or Edge — when the share picker opens, choose a
+          tab, window or screen{sources.includes('system') && <> and tick <strong>Share audio</strong></>}.
+          Safari and Firefox restrict this.
         </p>
       )}
 
@@ -278,7 +320,8 @@ export default function RecorderStudio() {
           {!live && status !== 'done' && (
             <button
               onClick={handleStart}
-              className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-500"
+              disabled={sources.length === 0}
+              className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ● Start recording
             </button>
@@ -300,6 +343,7 @@ export default function RecorderStudio() {
           )}
         </div>
 
+        {warning && <p className="mt-4 text-sm text-amber-700">{warning}</p>}
         {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
       </section>
 
@@ -312,11 +356,14 @@ export default function RecorderStudio() {
               + New recording
             </button>
           </div>
-          {currentUrl && <audio controls src={currentUrl} className="mt-3 w-full" />}
+          {currentUrl && (current.hasVideo
+            ? <video controls src={currentUrl} className="mt-3 w-full rounded-lg bg-black" />
+            : <audio controls src={currentUrl} className="mt-3 w-full" />
+          )}
           <div className="mt-4">
             <div className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5">Download as</div>
             <div className="flex flex-wrap gap-2">
-              {FORMATS.map(f => (
+              {formatsFor(current).map(f => (
                 <button
                   key={f}
                   onClick={() => handleDownload(current, f)}
@@ -345,7 +392,7 @@ export default function RecorderStudio() {
                   <div className="min-w-0">
                     <div className="font-medium text-slate-800 truncate">{r.name}</div>
                     <div className="text-xs text-slate-500">
-                      {fmtTime(r.durationSec)} · {SOURCES.find(s => s.id === r.source)?.label ?? r.source}
+                      {fmtTime(r.durationSec)} · {sourceLabels(r)}{r.hasVideo ? ' · video' : ''}
                     </div>
                   </div>
                   <button
@@ -357,7 +404,7 @@ export default function RecorderStudio() {
                   </button>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {FORMATS.map(f => (
+                  {formatsFor(r).map(f => (
                     <button
                       key={f}
                       onClick={() => handleDownload(r, f)}
