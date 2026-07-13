@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { UniversalProvider } from '@unisim/sdk'
 import type { UniversalConfig } from '@unisim/sdk'
 import App from './App'
+import UsageTracker from './UsageTracker'
 import './index.css'
 
 // Universal Recorder captures and encodes audio entirely client-side —
@@ -21,6 +22,7 @@ const universalConfig: UniversalConfig = {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <UniversalProvider config={universalConfig}>
+      <UsageTracker />
       <App />
     </UniversalProvider>
   </React.StrictMode>
