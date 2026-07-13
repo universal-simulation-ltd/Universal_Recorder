@@ -89,6 +89,7 @@ export default function RecorderStudio() {
   const [sources, setSources] = useState<Source[]>(['mic'])
   const [mics, setMics] = useState<MediaDeviceInfo[]>([])
   const [micId, setMicId] = useState<string>('')
+  const [surface, setSurface] = useState<'monitor' | 'window' | 'browser'>('monitor')
   const [name, setName] = useState<string>(defaultName)
   const [status, setStatus] = useState<Status>('idle')
   const [level, setLevel] = useState(0)
@@ -143,6 +144,7 @@ export default function RecorderStudio() {
       await rec.start({
         sources,
         deviceId: micId || undefined,
+        displaySurface: sources.includes('screen') ? surface : undefined,
         onLevel: setLevel,
         onWarning: setWarning,
         onEnded: () => { if (recorderRef.current) void handleStop() },
@@ -302,43 +304,44 @@ export default function RecorderStudio() {
         })}
       </section>
 
-      {/* Mic device chooser — sits directly under the Microphone card (first column) */}
-      {needsMic && (
-        <div className={`grid grid-cols-1 gap-3 mb-2 ${isMobile ? '' : 'sm:grid-cols-3'}`}>
-          <select
-            aria-label="Microphone"
-            value={micId}
-            onChange={e => setMicId(e.target.value)}
-            disabled={live}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
-          >
-            <option value="">Default microphone</option>
-            {mics.map((m, i) => (
-              <option key={m.deviceId || i} value={m.deviceId}>
-                {m.label || `Microphone ${i + 1}`}
-              </option>
-            ))}
-          </select>
+      {/* Per-source choosers — each sits directly under its card (mic → col 1,
+          screen type → col 3), matching the source grid. */}
+      {(needsMic || (sources.includes('screen') && canScreen)) && (
+        <div className={`grid gap-3 mb-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-3'}`}>
+          {needsMic && (
+            <select
+              aria-label="Microphone"
+              value={micId}
+              onChange={e => setMicId(e.target.value)}
+              disabled={live}
+              className="sm:col-start-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+            >
+              <option value="">Default microphone</option>
+              {mics.map((m, i) => (
+                <option key={m.deviceId || i} value={m.deviceId}>
+                  {m.label || `Microphone ${i + 1}`}
+                </option>
+              ))}
+            </select>
+          )}
+          {sources.includes('screen') && canScreen && (
+            <select
+              aria-label="Screen type"
+              value={surface}
+              onChange={e => setSurface(e.target.value as 'monitor' | 'window' | 'browser')}
+              disabled={live}
+              title="Which surface the share picker opens on (Chrome — you still confirm)"
+              className="sm:col-start-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+            >
+              <option value="monitor">Entire screen</option>
+              <option value="window">A window</option>
+              <option value="browser">A browser tab</option>
+            </select>
+          )}
         </div>
       )}
 
       <p className="mb-4 text-xs text-slate-500">Tip: tick more than one to record them together.</p>
-
-      {/* Recording name — pre-filled with a default, editable before you record */}
-      {status !== 'done' && (
-        <div className="mb-4 flex items-center gap-2 text-sm">
-          <label htmlFor="rec-name" className="text-slate-500 shrink-0">Recording name</label>
-          <input
-            id="rec-name"
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            disabled={live}
-            placeholder={defaultName()}
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
-          />
-        </div>
-      )}
 
       {isMobile && (
         <p className="mb-4 text-xs text-slate-500">
@@ -389,13 +392,23 @@ export default function RecorderStudio() {
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {!live && status !== 'done' && (
-            <button
-              onClick={handleStart}
-              disabled={sources.length === 0}
-              className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              ● Start recording
-            </button>
+            <>
+              <input
+                aria-label="Recording name"
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder={defaultName()}
+                className="flex-1 min-w-[10rem] rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+              />
+              <button
+                onClick={handleStart}
+                disabled={sources.length === 0}
+                className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ● Start recording
+              </button>
+            </>
           )}
           {recording && (
             <button onClick={handlePause} className="rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200">
