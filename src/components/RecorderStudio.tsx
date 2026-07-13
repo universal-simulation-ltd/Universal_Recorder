@@ -14,10 +14,10 @@ const SOURCES: { id: Source; label: string; blurb: string; icon: string }[] = [
 
 const AUDIO_FORMATS: ExportFormat[] = ['webm', 'mp3', 'wav']
 
-// Which download formats apply to a recording. A screen capture has a video
-// track, so only the native WebM passes through; MP3/WAV are audio-only.
-function formatsFor(rec: StoredRecording): ExportFormat[] {
-  return rec.hasVideo ? ['webm'] : AUDIO_FORMATS
+// The real container extension of a recording (video is MP4 where the browser
+// could record it, else WebM; audio is WebM natively).
+function nativeExt(rec: StoredRecording): string {
+  return rec.mimeType.includes('mp4') ? 'mp4' : 'webm'
 }
 
 // Human label for a recording's sources, tolerant of older records that stored a
@@ -61,6 +61,10 @@ function uid(): string {
   return `${Date.now().toString(36)}-${Math.floor(performance.now()).toString(36)}`
 }
 
+function defaultName(): string {
+  return `Recording ${new Date().toLocaleString()}`
+}
+
 function download(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -85,6 +89,7 @@ export default function RecorderStudio() {
   const [sources, setSources] = useState<Source[]>(['mic'])
   const [mics, setMics] = useState<MediaDeviceInfo[]>([])
   const [micId, setMicId] = useState<string>('')
+  const [name, setName] = useState<string>(defaultName)
   const [status, setStatus] = useState<Status>('idle')
   const [level, setLevel] = useState(0)
   const [elapsed, setElapsed] = useState(0)
@@ -94,6 +99,8 @@ export default function RecorderStudio() {
   const [currentUrl, setCurrentUrl] = useState<string | null>(null)
   const [recents, setRecents] = useState<StoredRecording[]>([])
   const [busyFormat, setBusyFormat] = useState<string | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameDraft, setRenameDraft] = useState('')
 
   const recorderRef = useRef<AudioRecorder | null>(null)
   const tickRef = useRef<number | null>(null)
@@ -168,7 +175,7 @@ export default function RecorderStudio() {
       const result = await rec.stop()
       const stored: StoredRecording = {
         id: uid(),
-        name: `Recording ${new Date().toLocaleString()}`,
+        name: name.trim() || defaultName(),
         createdAt: Date.now(),
         durationSec: result.durationSec,
         mimeType: result.mimeType,
@@ -193,7 +200,27 @@ export default function RecorderStudio() {
     setCurrentUrl(null)
     setElapsed(0)
     setWarning(null)
+    setName(defaultName()) // fresh default for the next take
     setStatus('idle')
+  }
+
+  function startRename(rec: StoredRecording) { setRenamingId(rec.id); setRenameDraft(rec.name) }
+  function cancelRename() { setRenamingId(null); setRenameDraft('') }
+
+  async function saveRename(rec: StoredRecording) {
+    const updated = { ...rec, name: renameDraft.trim() || rec.name }
+    setRenamingId(null)
+    setRenameDraft('')
+    await saveRecording(updated)
+    if (current?.id === rec.id) setCurrent(updated)
+    void refreshRecents()
+  }
+
+  // Screen recordings are already in their final container (MP4/WebM) — just save
+  // the blob with the right extension; there's no audio-only transcode for video.
+  function handleDownloadNative(rec: StoredRecording) {
+    const base = rec.name.replace(/[^\w.-]+/g, '_').replace(/_+/g, '_')
+    download(rec.blob, `${base}.${nativeExt(rec)}`)
   }
 
   async function handleDownload(rec: StoredRecording, format: ExportFormat) {
@@ -275,6 +302,22 @@ export default function RecorderStudio() {
         })}
       </section>
       <p className="mb-4 text-xs text-slate-500">Tip: tick more than one to record them together.</p>
+
+      {/* Recording name — pre-filled with a default, editable before you record */}
+      {status !== 'done' && (
+        <div className="mb-4 flex items-center gap-2 text-sm">
+          <label htmlFor="rec-name" className="text-slate-500 shrink-0">Recording name</label>
+          <input
+            id="rec-name"
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            disabled={live}
+            placeholder={defaultName()}
+            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+          />
+        </div>
+      )}
 
       {/* Mic device picker */}
       {needsMic && (
@@ -394,17 +437,26 @@ export default function RecorderStudio() {
           <div className="mt-4">
             <div className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5">Download as</div>
             <div className="flex flex-wrap gap-2">
-              {formatsFor(current).map(f => (
+              {current.hasVideo ? (
                 <button
-                  key={f}
-                  onClick={() => handleDownload(current, f)}
-                  disabled={busyFormat !== null}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400 disabled:opacity-60 disabled:cursor-wait"
-                  title={FORMAT_META[f].hint}
+                  onClick={() => handleDownloadNative(current)}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400"
                 >
-                  {busyFormat === `${current.id}:${f}` ? 'Encoding…' : `⬇ ${FORMAT_META[f].label}`}
+                  ⬇ {nativeExt(current).toUpperCase()} video
                 </button>
-              ))}
+              ) : (
+                AUDIO_FORMATS.map(f => (
+                  <button
+                    key={f}
+                    onClick={() => handleDownload(current, f)}
+                    disabled={busyFormat !== null}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400 disabled:opacity-60 disabled:cursor-wait"
+                    title={FORMAT_META[f].hint}
+                  >
+                    {busyFormat === `${current.id}:${f}` ? 'Encoding…' : `⬇ ${FORMAT_META[f].label}`}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </section>
@@ -420,31 +472,68 @@ export default function RecorderStudio() {
             {recents.map(r => (
               <li key={r.id} className="rounded-xl border border-slate-200 bg-white p-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-medium text-slate-800 truncate">{r.name}</div>
+                  <div className="min-w-0 flex-1">
+                    {renamingId === r.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          autoFocus
+                          value={renameDraft}
+                          onChange={e => setRenameDraft(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') void saveRename(r)
+                            else if (e.key === 'Escape') cancelRename()
+                          }}
+                          className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                        />
+                        <button onClick={() => saveRename(r)} className="shrink-0 text-xs font-semibold text-orange-600 hover:text-orange-700">Save</button>
+                        <button onClick={cancelRename} className="shrink-0 text-xs text-slate-400 hover:text-slate-600">Cancel</button>
+                      </div>
+                    ) : (
+                      <div className="font-medium text-slate-800 truncate">{r.name}</div>
+                    )}
                     <div className="text-xs text-slate-500">
                       {fmtTime(r.durationSec)} · {sourceLabels(r)}{r.hasVideo ? ' · video' : ''}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    className="shrink-0 text-xs text-slate-400 hover:text-red-600"
-                    aria-label={`Delete ${r.name}`}
-                  >
-                    Delete
-                  </button>
+                  {renamingId !== r.id && (
+                    <div className="shrink-0 flex items-center gap-2 text-xs">
+                      <button
+                        onClick={() => startRename(r)}
+                        className="text-slate-400 hover:text-orange-600"
+                        aria-label={`Rename ${r.name}`}
+                      >
+                        Rename
+                      </button>
+                      <button
+                        onClick={() => handleDelete(r.id)}
+                        className="text-slate-400 hover:text-red-600"
+                        aria-label={`Delete ${r.name}`}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {formatsFor(r).map(f => (
+                  {r.hasVideo ? (
                     <button
-                      key={f}
-                      onClick={() => handleDownload(r, f)}
-                      disabled={busyFormat !== null}
-                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400 disabled:opacity-60 disabled:cursor-wait"
+                      onClick={() => handleDownloadNative(r)}
+                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400"
                     >
-                      {busyFormat === `${r.id}:${f}` ? 'Encoding…' : FORMAT_META[f].label}
+                      {nativeExt(r).toUpperCase()} video
                     </button>
-                  ))}
+                  ) : (
+                    AUDIO_FORMATS.map(f => (
+                      <button
+                        key={f}
+                        onClick={() => handleDownload(r, f)}
+                        disabled={busyFormat !== null}
+                        className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400 disabled:opacity-60 disabled:cursor-wait"
+                      >
+                        {busyFormat === `${r.id}:${f}` ? 'Encoding…' : FORMAT_META[f].label}
+                      </button>
+                    ))
+                  )}
                 </div>
               </li>
             ))}
