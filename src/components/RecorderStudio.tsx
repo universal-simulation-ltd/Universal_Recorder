@@ -76,6 +76,43 @@ function download(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+// A small equalizer-style visualisation shown while recording. A travelling sine
+// wave gives constant motion (so it dances even in silence, as requested), and the
+// live mic/system level scales the bar heights — approximate, not a real spectrum.
+function Visualizer({ level, active }: { level: number; active: boolean }) {
+  const [, tick] = useState(0)
+  useEffect(() => {
+    if (!active) return
+    let raf = 0
+    const loop = () => { tick(n => (n + 1) % 1_000_000); raf = requestAnimationFrame(loop) }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [active])
+
+  const bars = 28
+  const t = performance.now() / 1000
+  const colour = level > 0.8 ? '#dc2626' : level > 0.5 ? '#f59e0b' : '#f97316'
+  return (
+    <div className="mt-4 flex items-center justify-center gap-[3px] h-10" aria-hidden="true">
+      {Array.from({ length: bars }).map((_, i) => {
+        const wobble = Math.sin(t * 5 + i * 0.5) * 0.5 + 0.5
+        const h = active ? Math.min(1, 0.14 + 0.3 * wobble + level * 0.75) : 0.06
+        return (
+          <div
+            key={i}
+            className="w-1 rounded-full"
+            style={{
+              height: `${h * 100}%`,
+              background: active ? colour : '#cbd5e1',
+              transition: 'height 90ms linear',
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 export default function RecorderStudio() {
   const [isMobile] = useState(isMobileBrowser)
   const [canSystemAudio] = useState(systemAudioSupported)
@@ -363,32 +400,22 @@ export default function RecorderStudio() {
 
       {/* Transport */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span
-              className={[
-                'inline-block w-3 h-3 rounded-full',
-                recording ? 'bg-red-600 rec-dot' : paused ? 'bg-amber-500' : 'bg-slate-300',
-              ].join(' ')}
-              aria-hidden="true"
-            />
-            <span className="text-3xl font-semibold tabular-nums text-slate-900">{fmtTime(elapsed)}</span>
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              {recording ? 'Recording' : paused ? 'Paused' : status === 'done' ? 'Stopped' : 'Ready'}
-            </span>
-          </div>
+        <div className="flex items-center justify-center gap-3">
+          <span
+            className={[
+              'inline-block w-3 h-3 rounded-full',
+              recording ? 'bg-red-600 rec-dot' : paused ? 'bg-amber-500' : 'bg-slate-300',
+            ].join(' ')}
+            aria-hidden="true"
+          />
+          <span className="text-3xl font-semibold tabular-nums text-slate-900">{fmtTime(elapsed)}</span>
+          <span className="text-xs uppercase tracking-wide text-slate-400">
+            {recording ? 'Recording' : paused ? 'Paused' : status === 'done' ? 'Stopped' : 'Ready'}
+          </span>
         </div>
 
-        {/* Level meter */}
-        <div className="mt-4 h-3 rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
-          <div
-            className="h-full rounded-full transition-[width] duration-75"
-            style={{
-              width: `${Math.min(100, Math.round(level * 140))}%`,
-              background: level > 0.8 ? '#dc2626' : level > 0.5 ? '#f59e0b' : '#f97316',
-            }}
-          />
-        </div>
+        {/* Audio visualisation (animated while recording) */}
+        <Visualizer level={level} active={recording} />
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {!live && status !== 'done' && (
