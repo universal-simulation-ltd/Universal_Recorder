@@ -342,8 +342,8 @@ export default function RecorderStudio() {
       </section>
 
       {/* Per-source choosers — each sits directly under its card (mic → col 1,
-          screen type → col 3), matching the source grid. */}
-      {(needsMic || (sources.includes('screen') && canScreen)) && (
+          system → col 2, screen type → col 3), matching the source grid. */}
+      {(needsMic || sources.includes('system') || (sources.includes('screen') && canScreen)) && (
         <div className={`grid gap-3 mb-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-3'}`}>
           {needsMic && (
             <select
@@ -359,6 +359,21 @@ export default function RecorderStudio() {
                   {m.label || `Microphone ${i + 1}`}
                 </option>
               ))}
+            </select>
+          )}
+          {sources.includes('system') && (
+            // System audio has no sub-choice — it's always everything playing on
+            // the device. This matches the dropdowns' style but only ever reads
+            // "All audio" (one option, nothing else to pick).
+            <select
+              aria-label="System audio"
+              value="all"
+              onChange={() => {}}
+              disabled={live}
+              title="System audio captures all sound playing on this device"
+              className="sm:col-start-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+            >
+              <option value="all">All audio</option>
             </select>
           )}
           {sources.includes('screen') && canScreen && (
