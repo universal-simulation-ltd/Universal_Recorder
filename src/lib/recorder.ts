@@ -37,6 +37,8 @@ export async function listMicrophones(): Promise<MediaDeviceInfo[]> {
 export interface StartOptions {
   sources: Source[]
   deviceId?: string
+  /** Chrome hint that pre-selects the screen-picker pane: monitor | window | browser. */
+  displaySurface?: 'monitor' | 'window' | 'browser'
   onLevel?: (level: number) => void
   /** Fired if a shared stream ends on its own (the browser's "Stop sharing"). */
   onEnded?: () => void
@@ -107,7 +109,12 @@ export class AudioRecorder {
       // Chrome only exposes a system/tab audio track when video is also requested,
       // so we request video even for system-audio-only and drop it afterwards.
       if (wantSystem || wantScreen) {
-        const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: wantSystem })
+        // `displaySurface` pre-selects the picker pane in Chrome (a hint — the
+        // user still confirms; Firefox ignores it). We always request video (even
+        // for system-audio-only) because Chrome only exposes system audio with it.
+        const video: boolean | MediaTrackConstraints =
+          opts.displaySurface ? ({ displaySurface: opts.displaySurface } as MediaTrackConstraints) : true
+        const display = await navigator.mediaDevices.getDisplayMedia({ video, audio: wantSystem })
         const vids = display.getVideoTracks()
         const auds = display.getAudioTracks()
 
