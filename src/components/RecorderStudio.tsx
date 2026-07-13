@@ -301,6 +301,27 @@ export default function RecorderStudio() {
           )
         })}
       </section>
+
+      {/* Mic device chooser — sits directly under the Microphone card (first column) */}
+      {needsMic && (
+        <div className={`grid grid-cols-1 gap-3 mb-2 ${isMobile ? '' : 'sm:grid-cols-3'}`}>
+          <select
+            aria-label="Microphone"
+            value={micId}
+            onChange={e => setMicId(e.target.value)}
+            disabled={live}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+          >
+            <option value="">Default microphone</option>
+            {mics.map((m, i) => (
+              <option key={m.deviceId || i} value={m.deviceId}>
+                {m.label || `Microphone ${i + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <p className="mb-4 text-xs text-slate-500">Tip: tick more than one to record them together.</p>
 
       {/* Recording name — pre-filled with a default, editable before you record */}
@@ -316,27 +337,6 @@ export default function RecorderStudio() {
             placeholder={defaultName()}
             className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
           />
-        </div>
-      )}
-
-      {/* Mic device picker */}
-      {needsMic && (
-        <div className="mb-4 flex items-center gap-2 text-sm">
-          <label htmlFor="mic" className="text-slate-500 shrink-0">Microphone</label>
-          <select
-            id="mic"
-            value={micId}
-            onChange={e => setMicId(e.target.value)}
-            disabled={live}
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
-          >
-            <option value="">Default microphone</option>
-            {mics.map((m, i) => (
-              <option key={m.deviceId || i} value={m.deviceId}>
-                {m.label || `Microphone ${i + 1}`}
-              </option>
-            ))}
-          </select>
         </div>
       )}
 
