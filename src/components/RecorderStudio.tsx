@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import RecordingPlayer from './RecordingPlayer'
 import { AudioRecorder, listMicrophones } from '../lib/recorder'
 import { FORMAT_META, toFormat } from '../lib/encode'
 import { deleteRecording, listRecordings, saveRecording } from '../lib/localRecordings'
@@ -135,6 +136,10 @@ export default function RecorderStudio() {
   const [warning, setWarning] = useState<string | null>(null)
   const [current, setCurrent] = useState<StoredRecording | null>(null)
   const [currentUrl, setCurrentUrl] = useState<string | null>(null)
+  // Live level + playing flag sourced from the result player, so the studio
+  // visualiser dances during playback too (not just while recording).
+  const [playbackLevel, setPlaybackLevel] = useState(0)
+  const [playing, setPlaying] = useState(false)
   const [recents, setRecents] = useState<StoredRecording[]>([])
   const [busyFormat, setBusyFormat] = useState<string | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -434,8 +439,8 @@ export default function RecorderStudio() {
           </span>
         </div>
 
-        {/* Audio visualisation (animated while recording) */}
-        <Visualizer level={level} active={recording} />
+        {/* Audio visualisation — animated while recording and while playing back. */}
+        <Visualizer level={recording ? level : playbackLevel} active={recording || playing} />
 
         <div className={`mt-5 flex flex-wrap items-center gap-3 ${live ? 'justify-center' : ''}`}>
           {!live && status !== 'done' && (
@@ -491,9 +496,14 @@ export default function RecorderStudio() {
               ＋ New recording
             </button>
           </div>
-          {currentUrl && (current.hasVideo
-            ? <video controls src={currentUrl} className="mt-3 w-full rounded-lg bg-black" />
-            : <audio controls src={currentUrl} className="mt-3 w-full" />
+          {currentUrl && (
+            <RecordingPlayer
+              key={current.id}
+              url={currentUrl}
+              hasVideo={current.hasVideo}
+              onLevel={setPlaybackLevel}
+              onPlayingChange={setPlaying}
+            />
           )}
           <div className="mt-4">
             <div className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5">Download as</div>
