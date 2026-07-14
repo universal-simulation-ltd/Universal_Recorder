@@ -437,7 +437,7 @@ export default function RecorderStudio() {
         {/* Audio visualisation (animated while recording) */}
         <Visualizer level={level} active={recording} />
 
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+        <div className={`mt-5 flex flex-wrap items-center gap-3 ${live ? 'justify-center' : ''}`}>
           {!live && status !== 'done' && (
             <>
               <input
