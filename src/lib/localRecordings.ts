@@ -62,3 +62,19 @@ export async function deleteRecording(id: string): Promise<void> {
     db.close()
   }
 }
+
+/** Drop every saved recording in one transaction — all-or-nothing, so a
+ *  failure part-way can't leave the list half-deleted. */
+export async function clearRecordings(): Promise<void> {
+  const db = await openDb()
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite')
+      tx.objectStore(STORE).clear()
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error)
+    })
+  } finally {
+    db.close()
+  }
+}
