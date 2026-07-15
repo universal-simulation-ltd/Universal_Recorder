@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import RecordingPlayer from './RecordingPlayer'
 import { AudioRecorder, listMicrophones } from '../lib/recorder'
 import { FORMAT_META, toFormat } from '../lib/encode'
+import { CONTAINER } from '../lib/layout'
 import { clearRecordings, deleteRecording, listRecordings, saveRecording } from '../lib/localRecordings'
 import type { ExportFormat, Source, StoredRecording } from '../lib/types'
 
@@ -311,7 +312,7 @@ export default function RecorderStudio() {
   const usesDisplay = sources.includes('system') || sources.includes('screen')
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+    <div className={`${CONTAINER} py-8 lg:py-12`}>
       <header className="mb-7">
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
           Record audio &amp; screen that <span className="text-orange-600">stays on your device</span>.

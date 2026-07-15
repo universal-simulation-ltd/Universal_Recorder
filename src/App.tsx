@@ -1,6 +1,7 @@
 import { UniversalAppsNavBar } from '@unisim/sdk'
 import ProductLogo from './components/Header/ProductLogo'
 import RecorderStudio from './components/RecorderStudio'
+import { CONTAINER } from './lib/layout'
 
 const REPO_URL = 'https://github.com/universal-simulation-ltd/Universal_Recorder'
 
@@ -12,6 +13,7 @@ export default function App() {
         productLogo={<ProductLogo />}
         productHomeHref={import.meta.env.BASE_URL}
         suiteSwitcherIconSrc={`${import.meta.env.BASE_URL}unisim-icon.png`}
+        contentClassName={CONTAINER}
       />
 
       <main className="flex-1">
@@ -19,7 +21,7 @@ export default function App() {
       </main>
 
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-4 flex flex-row items-center gap-3 text-xs text-slate-500">
+        <div className={`${CONTAINER} py-4 flex flex-row items-center gap-3 text-xs text-slate-500`}>
           <span>
             100% free — record locally, no paywalls. Recordings never leave your browser. Hosted by{' '}
             <a href="https://www.unisim.co.uk" target="_blank" rel="noreferrer" className="text-slate-700 hover:text-orange-600 underline-offset-2 hover:underline">
