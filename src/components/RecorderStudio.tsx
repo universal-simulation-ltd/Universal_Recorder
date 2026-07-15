@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import RecordingPlayer from './RecordingPlayer'
 import { AudioRecorder, listMicrophones } from '../lib/recorder'
 import { FORMAT_META, toFormat } from '../lib/encode'
-import { deleteRecording, listRecordings, saveRecording } from '../lib/localRecordings'
+import { clearRecordings, deleteRecording, listRecordings, saveRecording } from '../lib/localRecordings'
 import type { ExportFormat, Source, StoredRecording } from '../lib/types'
 
 type Status = 'idle' | 'recording' | 'paused' | 'done'
@@ -144,6 +144,13 @@ export default function RecorderStudio() {
   const [busyFormat, setBusyFormat] = useState<string | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
+  // The saved-recordings list is collapsed by default — it grows without bound
+  // and pushes the recorder itself off-screen, which is the thing people come
+  // here to use.
+  const [recentsOpen, setRecentsOpen] = useState(false)
+  // Two-step guard on Delete all: the blobs are local-only, so there is nothing
+  // to restore them from.
+  const [confirmingClearAll, setConfirmingClearAll] = useState(false)
 
   const recorderRef = useRef<AudioRecorder | null>(null)
   const tickRef = useRef<number | null>(null)
@@ -285,6 +292,16 @@ export default function RecorderStudio() {
     await deleteRecording(id)
     void refreshRecents()
     if (current?.id === id) handleNew()
+  }
+
+  async function handleDeleteAll() {
+    await clearRecordings()
+    setConfirmingClearAll(false)
+    setRenamingId(null) // the row being renamed no longer exists
+    void refreshRecents()
+    // The loaded take is one of the rows we just dropped, so clear the player
+    // too — otherwise it keeps playing a recording that is no longer saved.
+    if (current) handleNew()
   }
 
   const recording = status === 'recording'
@@ -536,10 +553,52 @@ export default function RecorderStudio() {
       {/* Recents */}
       {recents.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-2">
-            On this device ({recents.length})
-          </h2>
-          <ul className="space-y-2">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="text-xs uppercase tracking-wide text-slate-500 font-medium">
+              <button
+                type="button"
+                onClick={() => setRecentsOpen(o => !o)}
+                aria-expanded={recentsOpen}
+                aria-controls="recents-list"
+                className="inline-flex items-center gap-1.5 uppercase tracking-wide hover:text-slate-700"
+              >
+                <span
+                  aria-hidden
+                  className={`text-[10px] leading-none transition-transform ${recentsOpen ? 'rotate-90' : ''}`}
+                >
+                  ▶
+                </span>
+                On this device ({recents.length})
+              </button>
+            </h2>
+            {confirmingClearAll ? (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-slate-500">
+                  Delete all {recents.length}? This can't be undone.
+                </span>
+                <button
+                  onClick={() => void handleDeleteAll()}
+                  className="font-semibold text-red-600 hover:text-red-700"
+                >
+                  Yes, delete
+                </button>
+                <button
+                  onClick={() => setConfirmingClearAll(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmingClearAll(true)}
+                className="text-xs text-slate-400 hover:text-red-600"
+              >
+                Delete all
+              </button>
+            )}
+          </div>
+          <ul id="recents-list" hidden={!recentsOpen} className="space-y-2">
             {recents.map(r => (
               <li key={r.id} className="rounded-xl border border-slate-200 bg-white p-3">
                 <div className="flex items-start justify-between gap-3">
