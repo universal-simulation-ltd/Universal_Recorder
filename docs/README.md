@@ -2,9 +2,12 @@
 
 ## What this repo is
 
-Universal Recorder records audio in the browser — **microphone, system audio
-(Chrome/Edge tab/screen share audio), or a real mix of both** through one Web
-Audio graph — and saves the result as **WebM, MP3 or WAV**. Local-first:
+Universal Recorder records in the browser — **microphone, system audio
+(Chrome/Edge tab/screen share audio), the screen as video, and the webcam** —
+any combination at once. Audio mixes through one Web Audio graph; the webcam is
+composited onto the screen as a **picture-in-picture overlay** on a `<canvas>`
+(or recorded full-frame when no screen is shared). Screen/webcam captures save
+as **MP4/WebM**; audio-only saves as **WebM, MP3 or WAV**. Local-first:
 recordings are captured, encoded and stored entirely on-device (IndexedDB);
 nothing is uploaded.
 
@@ -15,9 +18,11 @@ nothing is uploaded.
   `wrangler pages deploy dist --project-name=universal-recorder`).
 - **Stack:** Vite + React 18 + TypeScript. Native `MediaRecorder` for
   WebM/Opus, a PCM muxer for WAV, and `lamejs` for on-device MP3 transcoding.
-- **Features:** record/pause/resume/stop transport, live level meter, mic
-  device picker, in-page playback, and local-first recents (play, re-download
-  in any format, delete).
+- **Features:** record/pause/resume/stop transport, live level meter, mic +
+  camera device pickers, a **webcam picture-in-picture overlay** (corner +
+  size, adjustable live) composited via `<canvas>.captureStream()`, a live
+  self-view while recording, in-page playback, and local-first recents (play,
+  re-download in any format, delete).
 
 The Universal ID session only drives the shared `@unisim/sdk` navbar/profile —
 there is no upload path. MIT licensed — free and open source, like all

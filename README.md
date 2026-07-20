@@ -1,21 +1,27 @@
 # Universal Recorder
 
-Record audio in your browser — **microphone**, **system audio**, or **both** — and
-save it as **WebM**, **MP3** or **WAV**. Local-first: recordings are captured,
-encoded and stored entirely on your device (IndexedDB); nothing is uploaded.
+Record in your browser — **microphone**, **system audio**, your **screen**, and your
+**webcam** — in any combination. The webcam composites onto the screen as a
+picture-in-picture overlay. Save as **MP4/WebM** (screen/webcam) or **WebM/MP3/WAV**
+(audio-only). Local-first: recordings are captured, encoded and stored entirely on
+your device (IndexedDB); nothing is uploaded.
 
 Part of the open-source **Universal Apps** family (sibling to Universal PDF /
 Images / QR / Signatures). Served at `opensource.unisim.co.uk/recorder`.
 
 ## Features
 
-- **Three sources** — microphone (`getUserMedia`), system audio
-  (`getDisplayMedia`, Chrome/Edge — tick *Share audio*), or a real mix of both
-  through one Web Audio graph.
-- **Transport** — record / pause / resume / stop, a live level meter and an
-  elapsed timer.
-- **Device picker** — choose which microphone to capture.
-- **Playback** — listen back to the finished clip in-page.
+- **Four sources** — microphone (`getUserMedia`), system audio
+  (`getDisplayMedia`, Chrome/Edge — tick *Share audio*), the screen as video,
+  and the webcam (`getUserMedia`) — any combination. Audio mixes through one
+  Web Audio graph.
+- **Webcam overlay** — the camera is composited onto the screen as a
+  **picture-in-picture** (choose the corner + size, adjustable live) via
+  `<canvas>.captureStream()`, or recorded full-frame when no screen is shared.
+- **Transport** — record / pause / resume / stop, a live level meter, a live
+  self-view of the video, and an elapsed timer.
+- **Device pickers** — choose which microphone and camera to capture.
+- **Playback** — listen back / watch the finished clip in-page.
 - **Save as** — WebM/Opus (native `MediaRecorder`), plus WAV (PCM muxer) and MP3
   (`lamejs`) transcoded on-device from the decoded audio.
 - **Local-first recents** — finished recordings are kept in IndexedDB; play,

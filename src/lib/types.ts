@@ -2,8 +2,19 @@
 //   mic    — the microphone (getUserMedia audio)
 //   system — this device's audio (getDisplayMedia audio)
 //   screen — the screen/window/tab as video (getDisplayMedia video)
+//   webcam — the camera (getUserMedia video), composited as a picture-in-picture
+//            overlay on the screen (or recorded full-frame when screen is off)
 // `system` and `screen` both come from one screen-share prompt.
-export type Source = 'mic' | 'system' | 'screen'
+export type Source = 'mic' | 'system' | 'screen' | 'webcam'
+
+// Where the webcam picture-in-picture overlay sits and how big it is (as a
+// fraction of the screen width). Both can be changed live while recording.
+export type PipPosition = 'br' | 'bl' | 'tr' | 'tl'
+export type PipSize = 'sm' | 'md' | 'lg'
+export interface WebcamOverlay {
+  position: PipPosition
+  size: PipSize
+}
 
 // Save-as formats. WebM is what MediaRecorder produces natively; WAV and MP3 are
 // audio-only transcodes from the decoded PCM (so they're offered only for
