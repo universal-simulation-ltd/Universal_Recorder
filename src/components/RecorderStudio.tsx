@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import RecordingPlayer from './RecordingPlayer'
-import { AudioRecorder, listMicrophones } from '../lib/recorder'
+import { AudioRecorder, listCameras, listMicrophones } from '../lib/recorder'
 import { FORMAT_META, toFormat } from '../lib/encode'
 import { CONTAINER } from '../lib/layout'
 import { clearRecordings, deleteRecording, listRecordings, saveRecording } from '../lib/localRecordings'
-import type { ExportFormat, Source, StoredRecording } from '../lib/types'
+import type { ExportFormat, PipPosition, PipSize, Source, StoredRecording } from '../lib/types'
 
 type Status = 'idle' | 'recording' | 'paused' | 'done'
 
@@ -12,6 +12,19 @@ const SOURCES: { id: Source; label: string; blurb: string; icon: string }[] = [
   { id: 'mic',    label: 'Microphone',   blurb: 'Your voice / mic input',         icon: '🎙️' },
   { id: 'system', label: 'System audio', blurb: 'What is playing on this device',  icon: '🔊' },
   { id: 'screen', label: 'Screen',       blurb: 'Record your screen as video',     icon: '🖥️' },
+  { id: 'webcam', label: 'Webcam',       blurb: 'Camera overlay (picture-in-picture)', icon: '📷' },
+]
+
+const PIP_POSITIONS: { id: PipPosition; label: string }[] = [
+  { id: 'tl', label: 'Top left' },
+  { id: 'tr', label: 'Top right' },
+  { id: 'bl', label: 'Bottom left' },
+  { id: 'br', label: 'Bottom right' },
+]
+const PIP_SIZES: { id: PipSize; label: string }[] = [
+  { id: 'sm', label: 'Small' },
+  { id: 'md', label: 'Medium' },
+  { id: 'lg', label: 'Large' },
 ]
 
 const AUDIO_FORMATS: ExportFormat[] = ['webm', 'mp3', 'wav']
@@ -43,6 +56,11 @@ function isMobileBrowser(): boolean {
 // Screen *video* capture works wherever getDisplayMedia exists (incl. Firefox).
 function screenSupported(): boolean {
   return typeof navigator !== 'undefined' && typeof navigator.mediaDevices?.getDisplayMedia === 'function'
+}
+
+// Webcam capture needs getUserMedia — available in every modern desktop browser.
+function webcamSupported(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.mediaDevices?.getUserMedia === 'function'
 }
 
 // Capturing system/tab *audio* via getDisplayMedia is a Chromium-only capability —
@@ -119,15 +137,21 @@ export default function RecorderStudio() {
   const [isMobile] = useState(isMobileBrowser)
   const [canSystemAudio] = useState(systemAudioSupported)
   const [canScreen] = useState(screenSupported)
+  const [canWebcam] = useState(webcamSupported)
   // Which cards to show, and why any are unavailable in this browser.
   const sourceOptions = (isMobile ? SOURCES.filter(s => s.id === 'mic') : SOURCES).map(s => {
     if (s.id === 'system' && !canSystemAudio) return { ...s, disabled: true, note: 'Chrome or Edge only' }
     if (s.id === 'screen' && !canScreen) return { ...s, disabled: true, note: 'Not supported here' }
+    if (s.id === 'webcam' && !canWebcam) return { ...s, disabled: true, note: 'Not supported here' }
     return { ...s, disabled: false as boolean, note: undefined as string | undefined }
   })
   const [sources, setSources] = useState<Source[]>([])
   const [mics, setMics] = useState<MediaDeviceInfo[]>([])
   const [micId, setMicId] = useState<string>('')
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([])
+  const [camId, setCamId] = useState<string>('')
+  const [pipPosition, setPipPosition] = useState<PipPosition>('br')
+  const [pipSize, setPipSize] = useState<PipSize>('md')
   const [surface, setSurface] = useState<'monitor' | 'window' | 'browser'>('monitor')
   const [name, setName] = useState<string>(defaultName)
   const [status, setStatus] = useState<Status>('idle')
@@ -155,19 +179,43 @@ export default function RecorderStudio() {
 
   const recorderRef = useRef<AudioRecorder | null>(null)
   const tickRef = useRef<number | null>(null)
+  const previewRef = useRef<HTMLVideoElement | null>(null)
 
   const refreshMics = useCallback(async () => {
     try { setMics(await listMicrophones()) } catch { /* ignore */ }
+  }, [])
+
+  const refreshCameras = useCallback(async () => {
+    try { setCameras(await listCameras()) } catch { /* ignore */ }
   }, [])
 
   const refreshRecents = useCallback(async () => {
     try { setRecents(await listRecordings()) } catch { /* ignore */ }
   }, [])
 
-  useEffect(() => { void refreshMics(); void refreshRecents() }, [refreshMics, refreshRecents])
+  useEffect(() => { void refreshMics(); void refreshCameras(); void refreshRecents() }, [refreshMics, refreshCameras, refreshRecents])
 
   // Revoke the playback URL when it changes / unmounts.
   useEffect(() => () => { if (currentUrl) URL.revokeObjectURL(currentUrl) }, [currentUrl])
+
+  // Live self-view: mirror the recorded video (screen + PiP, or the camera) into
+  // the preview element while recording, and detach it otherwise.
+  useEffect(() => {
+    const el = previewRef.current
+    if (!el) return
+    const stream = (status === 'recording' || status === 'paused')
+      ? recorderRef.current?.previewStream ?? null
+      : null
+    if (el.srcObject !== stream) el.srcObject = stream
+  }, [status])
+
+  // Push webcam overlay moves/resizes to the running compositor so the PiP can be
+  // repositioned live while recording.
+  useEffect(() => {
+    if (status === 'recording' || status === 'paused') {
+      recorderRef.current?.setWebcamOverlay({ position: pipPosition, size: pipSize })
+    }
+  }, [pipPosition, pipSize, status])
 
   const stopTick = () => {
     if (tickRef.current !== null) { window.clearInterval(tickRef.current); tickRef.current = null }
@@ -194,6 +242,8 @@ export default function RecorderStudio() {
       await rec.start({
         sources,
         deviceId: micId || undefined,
+        webcamDeviceId: camId || undefined,
+        webcam: sources.includes('webcam') ? { position: pipPosition, size: pipSize } : undefined,
         displaySurface: sources.includes('screen') ? surface : undefined,
         onLevel: setLevel,
         onWarning: setWarning,
@@ -202,7 +252,8 @@ export default function RecorderStudio() {
       setStatus('recording')
       setElapsed(0)
       startTick()
-      void refreshMics() // labels resolve once mic permission is granted
+      void refreshMics()    // labels resolve once mic permission is granted
+      void refreshCameras() // ditto for camera labels
     } catch (err) {
       recorderRef.current = null
       const msg = (err as Error).message || 'Could not start recording.'
@@ -310,6 +361,9 @@ export default function RecorderStudio() {
   const live = recording || paused
   const needsMic = sources.includes('mic')
   const usesDisplay = sources.includes('system') || sources.includes('screen')
+  const usesWebcam = sources.includes('webcam')
+  const webcamPip = usesWebcam && sources.includes('screen') // camera as a PiP overlay
+  const showPreview = live && (sources.includes('screen') || usesWebcam)
 
   return (
     <div className={`${CONTAINER} py-8 lg:py-12`}>
@@ -318,13 +372,13 @@ export default function RecorderStudio() {
           Record audio &amp; screen that <span className="text-orange-600">stays on your device</span>.
         </h1>
         <p className="mt-3 text-slate-600 max-w-xl">
-          Capture your microphone, your system audio and your screen — pick any combination — then
-          save it. Nothing is uploaded.
+          Capture your microphone, your system audio, your screen and your webcam — pick any
+          combination — then save it. Nothing is uploaded.
         </p>
       </header>
 
       {/* Source picker — pick any combination */}
-      <section className={`grid grid-cols-1 gap-3 mb-2 ${isMobile ? '' : 'sm:grid-cols-3'}`}>
+      <section className={`grid grid-cols-1 gap-3 mb-2 ${isMobile ? '' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
         {sourceOptions.map(s => {
           const active = sources.includes(s.id) && !s.disabled
           return (
@@ -365,16 +419,16 @@ export default function RecorderStudio() {
       </section>
 
       {/* Per-source choosers — each sits directly under its card (mic → col 1,
-          system → col 2, screen type → col 3), matching the source grid. */}
-      {(needsMic || sources.includes('system') || (sources.includes('screen') && canScreen)) && (
-        <div className={`grid gap-3 mb-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-3'}`}>
+          system → col 2, screen → col 3, webcam camera → col 4), matching the grid. */}
+      {(needsMic || sources.includes('system') || (sources.includes('screen') && canScreen) || (usesWebcam && canWebcam)) && (
+        <div className={`grid gap-3 mb-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'}`}>
           {needsMic && (
             <select
               aria-label="Microphone"
               value={micId}
               onChange={e => setMicId(e.target.value)}
               disabled={live}
-              className="sm:col-start-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+              className="lg:col-start-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
             >
               <option value="">Default microphone</option>
               {mics.map((m, i) => (
@@ -394,7 +448,7 @@ export default function RecorderStudio() {
               onChange={() => {}}
               disabled={live}
               title="System audio captures all sound playing on this device"
-              className="sm:col-start-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+              className="lg:col-start-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
             >
               <option value="all">All audio</option>
             </select>
@@ -406,13 +460,86 @@ export default function RecorderStudio() {
               onChange={e => setSurface(e.target.value as 'monitor' | 'window' | 'browser')}
               disabled={live}
               title="Which surface the share picker opens on (Chrome — you still confirm)"
-              className="sm:col-start-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+              className="lg:col-start-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
             >
               <option value="monitor">Entire screen</option>
               <option value="window">A window</option>
               <option value="browser">A browser tab</option>
             </select>
           )}
+          {usesWebcam && canWebcam && (
+            <select
+              aria-label="Camera"
+              value={camId}
+              onChange={e => setCamId(e.target.value)}
+              disabled={live}
+              title="Which camera to use for the webcam overlay"
+              className="lg:col-start-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+            >
+              <option value="">Default camera</option>
+              {cameras.map((c, i) => (
+                <option key={c.deviceId || i} value={c.deviceId}>
+                  {c.label || `Camera ${i + 1}`}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
+
+      {/* Webcam overlay controls — where the picture-in-picture sits and how big.
+          Both can be changed live while recording. */}
+      {usesWebcam && canWebcam && (
+        <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Overlay position</span>
+              <div className="flex flex-wrap gap-1.5">
+                {PIP_POSITIONS.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setPipPosition(p.id)}
+                    aria-pressed={pipPosition === p.id}
+                    className={[
+                      'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                      pipPosition === p.id
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300',
+                    ].join(' ')}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Size</span>
+              <div className="flex gap-1.5">
+                {PIP_SIZES.map(sz => (
+                  <button
+                    key={sz.id}
+                    type="button"
+                    onClick={() => setPipSize(sz.id)}
+                    aria-pressed={pipSize === sz.id}
+                    className={[
+                      'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                      pipSize === sz.id
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300',
+                    ].join(' ')}
+                  >
+                    {sz.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-500">
+            {webcamPip
+              ? 'Your camera is overlaid on the screen as a picture-in-picture. Position and size can be changed while recording.'
+              : 'Add Screen to overlay the camera as a picture-in-picture — otherwise the webcam records full-frame.'}
+          </p>
         </div>
       )}
 
@@ -436,6 +563,13 @@ export default function RecorderStudio() {
         </p>
       )}
 
+      {!isMobile && usesWebcam && (
+        <p className="mb-4 text-xs text-slate-500">
+          Your browser will ask to use the camera when recording starts. The webcam feed is composited
+          on-device and never uploaded.
+        </p>
+      )}
+
       {/* Transport — only once a source is chosen */}
       {sources.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-6 text-center text-sm text-slate-500">
@@ -456,6 +590,17 @@ export default function RecorderStudio() {
             {recording ? 'Recording' : paused ? 'Paused' : status === 'done' ? 'Stopped' : 'Ready'}
           </span>
         </div>
+
+        {/* Live self-view while recording video (screen + PiP, or the camera). Kept
+            mounted whenever a video source is picked so the effect can bind the
+            stream; hidden until there's actually something to show. */}
+        <video
+          ref={previewRef}
+          muted
+          playsInline
+          autoPlay
+          className={`mx-auto mt-4 w-full max-w-md rounded-lg border border-slate-200 bg-black ${showPreview ? '' : 'hidden'}`}
+        />
 
         {/* Audio visualisation — animated while recording and while playing back. */}
         <Visualizer level={recording ? level : playbackLevel} active={recording || playing} />
