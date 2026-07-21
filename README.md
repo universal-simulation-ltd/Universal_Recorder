@@ -39,6 +39,11 @@ npm run typecheck
 Production is served under `/recorder/` (Vite `base`); `public/_redirects`
 rewrites the flat `dist/` output for the Cloudflare Pages prefix.
 
+Each build bakes the commit SHA into a `<meta name="build-sha">` tag and logs
+`build: <sha>` to the console at startup, so you can tell which build is live
+in-browser. On Cloudflare Pages the SHA comes from `CF_PAGES_COMMIT_SHA`; locally
+it falls back to the git short SHA (or `dev`).
+
 ## Privacy
 
 Everything runs client-side. The Universal ID session only drives the shared
