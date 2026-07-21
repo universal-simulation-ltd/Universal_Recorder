@@ -8,7 +8,7 @@
 // canvas's captureStream video is recorded instead of the raw screen track. With
 // webcam but no screen the camera is recorded full-frame. Recording uses
 // MediaRecorder; everything stays on-device, nothing is uploaded.
-import type { RecordingBlobResult, Source, WebcamOverlay } from './types'
+import type { PipShape, RecordingBlobResult, Source, WebcamOverlay } from './types'
 
 // The picture-in-picture overlay: draws the screen full-bleed on a canvas, then
 // the webcam on top in one corner. Reads a live-mutable overlay config each frame
@@ -75,12 +75,28 @@ class PipCompositor {
     }
 
     if (wv.videoWidth > 0 && wv.videoHeight > 0) {
+      const shape = this.overlay.shape ?? 'rounded'
       const margin = Math.max(16, Math.round(Math.min(canvas.width, canvas.height) * 0.03))
       const boxW = Math.round(canvas.width * this.sizeFraction())
-      const boxH = Math.round(boxW * (wv.videoHeight / wv.videoWidth))
-      const pos = this.overlay.position
-      const x = pos === 'bl' || pos === 'tl' ? margin : canvas.width - boxW - margin
-      const y = pos === 'tl' || pos === 'tr' ? margin : canvas.height - boxH - margin
+      // Circle/square crop to a 1:1 box; rounded keeps the camera's aspect.
+      const boxH = shape === 'rounded'
+        ? Math.round(boxW * (wv.videoHeight / wv.videoWidth))
+        : boxW
+
+      // Free placement (drag) overrides the corner preset; clamp so the box
+      // always stays fully inside the frame.
+      let x: number
+      let y: number
+      if (this.overlay.x != null && this.overlay.y != null) {
+        const maxX = Math.max(margin, canvas.width - boxW - margin)
+        const maxY = Math.max(margin, canvas.height - boxH - margin)
+        x = Math.min(Math.max(Math.round(this.overlay.x * canvas.width - boxW / 2), margin), maxX)
+        y = Math.min(Math.max(Math.round(this.overlay.y * canvas.height - boxH / 2), margin), maxY)
+      } else {
+        const pos = this.overlay.position
+        x = pos === 'bl' || pos === 'tl' ? margin : canvas.width - boxW - margin
+        y = pos === 'tl' || pos === 'tr' ? margin : canvas.height - boxH - margin
+      }
       const r = Math.min(24, Math.round(boxW * 0.08))
 
       ctx.save()
@@ -88,13 +104,13 @@ class PipCompositor {
       ctx.shadowColor = 'rgba(0,0,0,0.45)'
       ctx.shadowBlur = Math.round(boxW * 0.05)
       ctx.shadowOffsetY = Math.round(boxW * 0.02)
-      this.roundRect(x, y, boxW, boxH, r)
+      this.pathShape(x, y, boxW, boxH, r, shape)
       ctx.fillStyle = '#000'
       ctx.fill()
       ctx.restore()
 
       ctx.save()
-      this.roundRect(x, y, boxW, boxH, r)
+      this.pathShape(x, y, boxW, boxH, r, shape)
       ctx.clip()
       // "Cover" the box: crop the camera frame to the box's aspect, no stretching.
       const scale = Math.max(boxW / wv.videoWidth, boxH / wv.videoHeight)
@@ -105,7 +121,7 @@ class PipCompositor {
 
       // Hairline border to lift the overlay off the screen content.
       ctx.save()
-      this.roundRect(x, y, boxW, boxH, r)
+      this.pathShape(x, y, boxW, boxH, r, shape)
       ctx.lineWidth = Math.max(2, Math.round(boxW * 0.012))
       ctx.strokeStyle = 'rgba(255,255,255,0.9)'
       ctx.stroke()
@@ -115,9 +131,27 @@ class PipCompositor {
     this.raf = requestAnimationFrame(this.draw)
   }
 
+  // Trace the overlay outline for the current shape onto ctx's path. 'circle'
+  // inscribes a circle in the box; 'square' is a sharp rectangle; 'rounded' uses
+  // the corner radius. Callers fill / clip / stroke the resulting path.
+  private pathShape(x: number, y: number, w: number, h: number, r: number, shape: PipShape) {
+    const ctx = this.ctx
+    if (shape === 'circle') {
+      ctx.beginPath()
+      ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2)
+      ctx.closePath()
+      return
+    }
+    this.roundRect(x, y, w, h, shape === 'square' ? 0 : r)
+  }
+
   private roundRect(x: number, y: number, w: number, h: number, r: number) {
     const ctx = this.ctx
     ctx.beginPath()
+    if (r <= 0) {
+      ctx.rect(x, y, w, h)
+      return
+    }
     if (typeof ctx.roundRect === 'function') {
       ctx.roundRect(x, y, w, h, r)
       return
