@@ -4,7 +4,8 @@ import { AudioRecorder, listCameras, listMicrophones } from '../lib/recorder'
 import { FORMAT_META, toFormat } from '../lib/encode'
 import { CONTAINER } from '../lib/layout'
 import { clearRecordings, deleteRecording, listRecordings, saveRecording } from '../lib/localRecordings'
-import type { ExportFormat, PipPosition, PipSize, Source, StoredRecording } from '../lib/types'
+import type { ExportFormat, PipPosition, PipShape, PipSize, Source, StoredRecording, WebcamOverlay } from '../lib/types'
+import OverlayDesigner from './OverlayDesigner'
 
 type Status = 'idle' | 'recording' | 'paused' | 'done'
 
@@ -26,6 +27,41 @@ const PIP_SIZES: { id: PipSize; label: string }[] = [
   { id: 'md', label: 'Medium' },
   { id: 'lg', label: 'Large' },
 ]
+const PIP_SHAPES: { id: PipShape; label: string }[] = [
+  { id: 'rounded', label: 'Rounded' },
+  { id: 'square', label: 'Square' },
+  { id: 'circle', label: 'Circle' },
+]
+
+// Persist the webcam overlay layout (shape/size/corner + any dragged position)
+// on this device, so a user's custom setup survives a reload. Local-only —
+// nothing about the overlay leaves the browser.
+const OVERLAY_PREFS_KEY = 'universal-recorder:overlay'
+interface OverlayPrefs {
+  position: PipPosition
+  size: PipSize
+  shape: PipShape
+  x: number | null
+  y: number | null
+}
+const DEFAULT_OVERLAY_PREFS: OverlayPrefs = { position: 'br', size: 'md', shape: 'rounded', x: null, y: null }
+
+function loadOverlayPrefs(): OverlayPrefs {
+  try {
+    const raw = localStorage.getItem(OVERLAY_PREFS_KEY)
+    if (!raw) return DEFAULT_OVERLAY_PREFS
+    const p = JSON.parse(raw) as Partial<OverlayPrefs>
+    return {
+      position: p.position ?? DEFAULT_OVERLAY_PREFS.position,
+      size: p.size ?? DEFAULT_OVERLAY_PREFS.size,
+      shape: p.shape ?? DEFAULT_OVERLAY_PREFS.shape,
+      x: typeof p.x === 'number' ? p.x : null,
+      y: typeof p.y === 'number' ? p.y : null,
+    }
+  } catch {
+    return DEFAULT_OVERLAY_PREFS
+  }
+}
 
 const AUDIO_FORMATS: ExportFormat[] = ['webm', 'mp3', 'wav']
 
@@ -150,8 +186,14 @@ export default function RecorderStudio() {
   const [micId, setMicId] = useState<string>('')
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([])
   const [camId, setCamId] = useState<string>('')
-  const [pipPosition, setPipPosition] = useState<PipPosition>('br')
-  const [pipSize, setPipSize] = useState<PipSize>('md')
+  const [pipPosition, setPipPosition] = useState<PipPosition>(() => loadOverlayPrefs().position)
+  const [pipSize, setPipSize] = useState<PipSize>(() => loadOverlayPrefs().size)
+  const [pipShape, setPipShape] = useState<PipShape>(() => loadOverlayPrefs().shape)
+  // Free drag placement (normalized centre). null → use the corner `pipPosition`.
+  const [pipX, setPipX] = useState<number | null>(() => loadOverlayPrefs().x)
+  const [pipY, setPipY] = useState<number | null>(() => loadOverlayPrefs().y)
+  // Live camera stream for the pre-recording placement preview.
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null)
   const [surface, setSurface] = useState<'monitor' | 'window' | 'browser'>('monitor')
   const [name, setName] = useState<string>(defaultName)
   const [status, setStatus] = useState<Status>('idle')
@@ -180,6 +222,25 @@ export default function RecorderStudio() {
   const recorderRef = useRef<AudioRecorder | null>(null)
   const tickRef = useRef<number | null>(null)
   const previewRef = useRef<HTMLVideoElement | null>(null)
+  const previewStreamRef = useRef<MediaStream | null>(null)
+
+  // The overlay config sent to the recorder — corner preset plus shape, and any
+  // dragged free position (which overrides the corner).
+  const overlayConfig = useCallback((): WebcamOverlay => ({
+    position: pipPosition,
+    size: pipSize,
+    shape: pipShape,
+    x: pipX ?? undefined,
+    y: pipY ?? undefined,
+  }), [pipPosition, pipSize, pipShape, pipX, pipY])
+
+  const stopPreviewStream = useCallback(() => {
+    if (previewStreamRef.current) {
+      previewStreamRef.current.getTracks().forEach(t => t.stop())
+      previewStreamRef.current = null
+    }
+    setPreviewStream(null)
+  }, [])
 
   const refreshMics = useCallback(async () => {
     try { setMics(await listMicrophones()) } catch { /* ignore */ }
@@ -209,13 +270,59 @@ export default function RecorderStudio() {
     if (el.srcObject !== stream) el.srcObject = stream
   }, [status])
 
-  // Push webcam overlay moves/resizes to the running compositor so the PiP can be
-  // repositioned live while recording.
+  // Push webcam overlay changes (position, drag, size, shape) to the running
+  // compositor so the PiP updates live while recording.
   useEffect(() => {
     if (status === 'recording' || status === 'paused') {
-      recorderRef.current?.setWebcamOverlay({ position: pipPosition, size: pipSize })
+      recorderRef.current?.setWebcamOverlay(overlayConfig())
     }
-  }, [pipPosition, pipSize, status])
+  }, [overlayConfig, status])
+
+  // Remember the overlay layout on this device.
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        OVERLAY_PREFS_KEY,
+        JSON.stringify({ position: pipPosition, size: pipSize, shape: pipShape, x: pipX, y: pipY }),
+      )
+    } catch { /* storage disabled — the layout just won't persist */ }
+  }, [pipPosition, pipSize, pipShape, pipX, pipY])
+
+  // Turn the camera on for the pre-recording placement preview whenever Webcam is
+  // selected and we're not already recording. Released as soon as the webcam is
+  // deselected, recording starts, or the component unmounts.
+  const usesWebcamSource = sources.includes('webcam')
+  useEffect(() => {
+    if (!usesWebcamSource || !canWebcam || status === 'recording' || status === 'paused') {
+      stopPreviewStream()
+      return
+    }
+    let cancelled = false
+    let localStream: MediaStream | null = null
+    ;(async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: camId ? { deviceId: { exact: camId } } : true,
+          audio: false,
+        })
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
+        // Replace any prior preview stream (e.g. after switching cameras).
+        if (previewStreamRef.current && previewStreamRef.current !== stream) {
+          previewStreamRef.current.getTracks().forEach(t => t.stop())
+        }
+        localStream = stream
+        previewStreamRef.current = stream
+        setPreviewStream(stream)
+      } catch { /* denied / no camera — preview just won't render */ }
+    })()
+    return () => {
+      cancelled = true
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop())
+        if (previewStreamRef.current === localStream) previewStreamRef.current = null
+      }
+    }
+  }, [usesWebcamSource, canWebcam, camId, status, stopPreviewStream])
 
   const stopTick = () => {
     if (tickRef.current !== null) { window.clearInterval(tickRef.current); tickRef.current = null }
@@ -236,6 +343,8 @@ export default function RecorderStudio() {
     setError(null)
     setWarning(null)
     if (sources.length === 0) { setError('Choose at least one source to record.'); return }
+    // Release the placement-preview camera so the recorder can claim it cleanly.
+    stopPreviewStream()
     const rec = new AudioRecorder()
     recorderRef.current = rec
     try {
@@ -243,7 +352,7 @@ export default function RecorderStudio() {
         sources,
         deviceId: micId || undefined,
         webcamDeviceId: camId || undefined,
-        webcam: sources.includes('webcam') ? { position: pipPosition, size: pipSize } : undefined,
+        webcam: sources.includes('webcam') ? overlayConfig() : undefined,
         displaySurface: sources.includes('screen') ? surface : undefined,
         onLevel: setLevel,
         onWarning: setWarning,
@@ -487,10 +596,22 @@ export default function RecorderStudio() {
         </div>
       )}
 
-      {/* Webcam overlay controls — where the picture-in-picture sits and how big.
-          Both can be changed live while recording. */}
+      {/* Webcam overlay controls — a live drag-to-place preview plus the shape,
+          position and size. All can be changed live while recording. */}
       {usesWebcam && canWebcam && (
         <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4">
+          {!live && (
+            <OverlayDesigner
+              stream={previewStream}
+              shape={pipShape}
+              size={pipSize}
+              position={pipPosition}
+              x={pipX}
+              y={pipY}
+              isPip={webcamPip}
+              onDrag={(nx, ny) => { setPipX(nx); setPipY(ny) }}
+            />
+          )}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Overlay position</span>
@@ -499,11 +620,13 @@ export default function RecorderStudio() {
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setPipPosition(p.id)}
-                    aria-pressed={pipPosition === p.id}
+                    // A corner preset clears any dragged position so the preset
+                    // takes over again.
+                    onClick={() => { setPipPosition(p.id); setPipX(null); setPipY(null) }}
+                    aria-pressed={pipPosition === p.id && pipX === null}
                     className={[
                       'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                      pipPosition === p.id
+                      pipPosition === p.id && pipX === null
                         ? 'border-orange-500 bg-orange-50 text-orange-700'
                         : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300',
                     ].join(' ')}
@@ -534,10 +657,31 @@ export default function RecorderStudio() {
                 ))}
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Shape</span>
+              <div className="flex gap-1.5">
+                {PIP_SHAPES.map(sh => (
+                  <button
+                    key={sh.id}
+                    type="button"
+                    onClick={() => setPipShape(sh.id)}
+                    aria-pressed={pipShape === sh.id}
+                    className={[
+                      'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                      pipShape === sh.id
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300',
+                    ].join(' ')}
+                  >
+                    {sh.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           <p className="mt-2 text-[11px] text-slate-500">
             {webcamPip
-              ? 'Your camera is overlaid on the screen as a picture-in-picture. Position and size can be changed while recording.'
+              ? 'Drag the camera in the preview to place it anywhere; shape, position and size can all be changed while recording too.'
               : 'Add Screen to overlay the camera as a picture-in-picture — otherwise the webcam records full-frame.'}
           </p>
         </div>
@@ -565,8 +709,8 @@ export default function RecorderStudio() {
 
       {!isMobile && usesWebcam && (
         <p className="mb-4 text-xs text-slate-500">
-          Your browser will ask to use the camera when recording starts. The webcam feed is composited
-          on-device and never uploaded.
+          Your browser turns the camera on for a live preview so you can place the overlay before
+          recording. The webcam feed is composited on-device and never uploaded.
         </p>
       )}
 

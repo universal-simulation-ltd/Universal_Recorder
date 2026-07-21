@@ -7,13 +7,26 @@
 // `system` and `screen` both come from one screen-share prompt.
 export type Source = 'mic' | 'system' | 'screen' | 'webcam'
 
-// Where the webcam picture-in-picture overlay sits and how big it is (as a
-// fraction of the screen width). Both can be changed live while recording.
+// Where the webcam picture-in-picture overlay sits, how big it is (as a fraction
+// of the screen width) and what shape it's masked to. All can be changed live
+// while recording.
 export type PipPosition = 'br' | 'bl' | 'tr' | 'tl'
 export type PipSize = 'sm' | 'md' | 'lg'
+// The overlay mask. 'rounded' keeps the camera's own aspect ratio with rounded
+// corners (the default); 'square' and 'circle' crop to a 1:1 box.
+export type PipShape = 'rounded' | 'square' | 'circle'
 export interface WebcamOverlay {
   position: PipPosition
   size: PipSize
+  shape?: PipShape
+  /**
+   * Free placement as the overlay box's CENTRE, normalized to the screen
+   * (0..1 on each axis). When set, it overrides `position` — this is what the
+   * drag-to-place preview writes so the camera can sit anywhere, not just in a
+   * corner. Clamped into the frame (with the same margin) by the compositor.
+   */
+  x?: number
+  y?: number
 }
 
 // Save-as formats. WebM is what MediaRecorder produces natively; WAV and MP3 are
