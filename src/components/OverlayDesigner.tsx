@@ -10,6 +10,14 @@ import type { PipPosition, PipShape, PipSize } from '../lib/types'
 interface Props {
   /** Live camera stream for the preview (null before permission / while off). */
   stream: MediaStream | null
+  /**
+   * A frozen still of the user's real screen (data URL) used as the stage
+   * backdrop, so the camera can be placed over the actual screen. A STILL frame
+   * (not a live feed) is deliberate: it can't recurse into a mirror-tunnel the
+   * way a live view of the screen you're capturing would. null → a plain
+   * placeholder is shown instead.
+   */
+  backdrop: string | null
   shape: PipShape
   size: PipSize
   position: PipPosition
@@ -28,11 +36,12 @@ interface Props {
 const SIZE_FRACTION: Record<PipSize, number> = { sm: 0.16, md: 0.23, lg: 0.3 }
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
 
-export default function OverlayDesigner({ stream, shape, size, position, x, y, isPip, onDrag }: Props) {
+export default function OverlayDesigner({ stream, backdrop, shape, size, position, x, y, isPip, onDrag }: Props) {
   const stageRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [stage, setStage] = useState({ w: 0, h: 0 })
   const [camHW, setCamHW] = useState(0.75) // camera height/width; 4:3 until known
+  const [bgAspect, setBgAspect] = useState('16 / 9') // stage aspect; matches the screenshot once loaded
   const [dragging, setDragging] = useState(false)
 
   // Bind the live camera stream to whichever <video> is mounted.
@@ -99,14 +108,28 @@ export default function OverlayDesigner({ stream, shape, size, position, x, y, i
       <div
         ref={stageRef}
         className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900"
-        style={{ aspectRatio: '16 / 9' }}
+        style={{ aspectRatio: backdrop && isPip ? bgAspect : '16 / 9' }}
       >
         {isPip ? (
           <>
-            {/* Stand-in "screen" so the PiP reads against the eventual capture. */}
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-medium uppercase tracking-wide text-white/20">Your screen</span>
-            </div>
+            {backdrop ? (
+              // A frozen still of the real screen — placement is against exactly
+              // what will be recorded, with no live mirror-tunnel.
+              <img
+                src={backdrop}
+                alt="Your screen"
+                onLoad={e => {
+                  const im = e.currentTarget
+                  if (im.naturalWidth > 0) setBgAspect(`${im.naturalWidth} / ${im.naturalHeight}`)
+                }}
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              // Stand-in "screen" until the user grabs a real screenshot.
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-medium uppercase tracking-wide text-white/20">Your screen</span>
+              </div>
+            )}
             <div
               role="button"
               tabIndex={0}
@@ -151,7 +174,9 @@ export default function OverlayDesigner({ stream, shape, size, position, x, y, i
       </div>
       <p className="mt-1.5 text-[11px] text-slate-500">
         {isPip
-          ? 'Live preview — drag the camera to place it, then pick a shape and size. Your layout is remembered on this device.'
+          ? backdrop
+            ? 'Drag the camera to place it over your screen. Pick a shape and size — your layout is remembered on this device.'
+            : 'Drag the camera to place it, then pick a shape and size. Use “Live preview” to drop in a still of your real screen.'
           : 'Full-frame preview. Add Screen to overlay the camera as a draggable picture-in-picture.'}
       </p>
     </div>

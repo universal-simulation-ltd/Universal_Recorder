@@ -194,6 +194,9 @@ export default function RecorderStudio() {
   const [pipY, setPipY] = useState<number | null>(() => loadOverlayPrefs().y)
   // Live camera stream for the pre-recording placement preview.
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null)
+  // A frozen still of the user's real screen, used as the placement backdrop.
+  const [screenShot, setScreenShot] = useState<string | null>(null)
+  const [grabbingShot, setGrabbingShot] = useState(false)
   const [surface, setSurface] = useState<'monitor' | 'window' | 'browser'>('monitor')
   const [name, setName] = useState<string>(defaultName)
   const [status, setStatus] = useState<Status>('idle')
@@ -337,6 +340,57 @@ export default function RecorderStudio() {
 
   function toggleSource(id: Source) {
     setSources(prev => (prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]))
+  }
+
+  // Grab a SINGLE still frame of the user's screen to use as the placement
+  // backdrop, then stop the capture immediately. A one-shot still (rather than a
+  // live feed) is what avoids the infinite mirror-tunnel you'd get from showing a
+  // live view of the very screen you're sharing. The real screen is picked again
+  // for the actual recording — this is only for positioning the overlay.
+  async function grabScreenshot() {
+    setError(null)
+    setGrabbingShot(true)
+    let stream: MediaStream | null = null
+    const video = document.createElement('video')
+    // A <video> only delivers frames when it's in the document (a fully detached
+    // element never fires loadeddata / paints), so park it off-screen like the
+    // compositor does, then remove it when we're done.
+    video.muted = true
+    video.playsInline = true
+    video.style.cssText = 'position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none'
+    document.body.appendChild(video)
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false })
+      video.srcObject = stream
+      void video.play().catch(() => {})
+      // Wait for a decoded frame, with a hard timeout so we can never hang.
+      await new Promise<void>(res => {
+        let done = false
+        const finish = () => { if (!done) { done = true; res() } }
+        if (video.readyState >= 2 && video.videoWidth > 0) return finish()
+        video.onloadeddata = finish
+        window.setTimeout(finish, 2500)
+      })
+      // A short settle so a frame is actually painted. A plain timer (not
+      // requestAnimationFrame, which a backgrounded tab throttles indefinitely)
+      // keeps the grab from ever hanging.
+      await new Promise<void>(res => window.setTimeout(res, 80))
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth || 1280
+      canvas.height = video.videoHeight || 720
+      canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height)
+      setScreenShot(canvas.toDataURL('image/jpeg', 0.85))
+    } catch (err) {
+      // Cancelling the picker is not an error worth shouting about.
+      if ((err as Error).name !== 'NotAllowedError' && (err as Error).name !== 'AbortError') {
+        setError((err as Error).message || 'Could not capture the screen for the preview.')
+      }
+    } finally {
+      stream?.getTracks().forEach(t => t.stop())
+      video.srcObject = null
+      video.remove()
+      setGrabbingShot(false)
+    }
   }
 
   async function handleStart() {
@@ -601,16 +655,41 @@ export default function RecorderStudio() {
       {usesWebcam && canWebcam && (
         <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4">
           {!live && (
-            <OverlayDesigner
-              stream={previewStream}
-              shape={pipShape}
-              size={pipSize}
-              position={pipPosition}
-              x={pipX}
-              y={pipY}
-              isPip={webcamPip}
-              onDrag={(nx, ny) => { setPipX(nx); setPipY(ny) }}
-            />
+            <>
+              <OverlayDesigner
+                stream={previewStream}
+                backdrop={webcamPip ? screenShot : null}
+                shape={pipShape}
+                size={pipSize}
+                position={pipPosition}
+                x={pipX}
+                y={pipY}
+                isPip={webcamPip}
+                onDrag={(nx, ny) => { setPipX(nx); setPipY(ny) }}
+              />
+              {webcamPip && (
+                <div className="mb-3 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void grabScreenshot()}
+                    disabled={grabbingShot}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-orange-300 disabled:opacity-60"
+                  >
+                    {grabbingShot ? 'Waiting for your screen…' : screenShot ? '↻ Refresh screenshot' : '🖥️ Live preview — use my screen'}
+                  </button>
+                  {screenShot && (
+                    <button
+                      type="button"
+                      onClick={() => setScreenShot(null)}
+                      className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <span className="text-[11px] text-slate-400">A still frame, grabbed once — no live mirror-tunnel.</span>
+                </div>
+              )}
+            </>
           )}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <div className="flex items-center gap-2">
