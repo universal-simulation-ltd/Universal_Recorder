@@ -6,6 +6,8 @@ import App from './App'
 import UsageTracker from './UsageTracker'
 import './index.css'
 
+console.log(`build: ${import.meta.env.VITE_BUILD_SHA}`)
+
 // Universal Recorder captures and encodes audio entirely client-side —
 // recordings never leave the browser. The Universal ID session (cookie SSO on
 // .unisim.co.uk) only drives the shared navbar/profile; there is no upload.
