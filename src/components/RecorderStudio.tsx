@@ -63,6 +63,31 @@ function loadOverlayPrefs(): OverlayPrefs {
   }
 }
 
+// Persist the pre-record countdown choice (on/off + seconds) on this device, in
+// the same local-only style as the overlay prefs above. When enabled, a short
+// beep countdown plays after the screen picker is confirmed and before recording
+// starts, so the start cue is audible even when the user has switched away to the
+// app they're demoing.
+const COUNTDOWN_PREFS_KEY = 'universal-recorder:countdown'
+interface CountdownPrefs {
+  enabled: boolean
+  seconds: number
+}
+const COUNTDOWN_CHOICES = [3, 5, 10]
+const DEFAULT_COUNTDOWN_PREFS: CountdownPrefs = { enabled: false, seconds: 3 }
+
+function loadCountdownPrefs(): CountdownPrefs {
+  try {
+    const raw = localStorage.getItem(COUNTDOWN_PREFS_KEY)
+    if (!raw) return DEFAULT_COUNTDOWN_PREFS
+    const p = JSON.parse(raw) as Partial<CountdownPrefs>
+    const seconds = typeof p.seconds === 'number' && p.seconds > 0 ? p.seconds : DEFAULT_COUNTDOWN_PREFS.seconds
+    return { enabled: p.enabled === true, seconds }
+  } catch {
+    return DEFAULT_COUNTDOWN_PREFS
+  }
+}
+
 const AUDIO_FORMATS: ExportFormat[] = ['webm', 'mp3', 'wav']
 
 // The real container extension of a recording (video is MP4 where the browser
@@ -192,12 +217,24 @@ export default function RecorderStudio() {
   // Free drag placement (normalized centre). null → use the corner `pipPosition`.
   const [pipX, setPipX] = useState<number | null>(() => loadOverlayPrefs().x)
   const [pipY, setPipY] = useState<number | null>(() => loadOverlayPrefs().y)
-  // Live camera stream for the pre-recording placement preview.
+  // Live camera stream for the pre-recording placement preview. Nothing turns on
+  // until the user presses Preview — ticking Webcam no longer auto-starts it.
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null)
   // A frozen still of the user's real screen, used as the placement backdrop.
   const [screenShot, setScreenShot] = useState<string | null>(null)
-  const [grabbingShot, setGrabbingShot] = useState(false)
+  // True once the user has run the Preview at least once for the current source
+  // selection — a visual (screen/webcam) recording is gated behind this.
+  const [hasPreviewed, setHasPreviewed] = useState(false)
+  // Preview is acquiring the camera / grabbing the screen still.
+  const [previewing, setPreviewing] = useState(false)
   const [surface, setSurface] = useState<'monitor' | 'window' | 'browser'>('monitor')
+  // Pre-record countdown (audible beeps) — persisted on this device.
+  const [countdownEnabled, setCountdownEnabled] = useState(() => loadCountdownPrefs().enabled)
+  const [countdownSeconds, setCountdownSeconds] = useState(() => loadCountdownPrefs().seconds)
+  // Seconds remaining while the pre-record countdown is playing (null otherwise).
+  const [countdownLeft, setCountdownLeft] = useState<number | null>(null)
+  // Between the Start click and the recorder actually running (picker + countdown).
+  const [starting, setStarting] = useState(false)
   const [name, setName] = useState<string>(defaultName)
   const [status, setStatus] = useState<Status>('idle')
   const [level, setLevel] = useState(0)
@@ -291,41 +328,22 @@ export default function RecorderStudio() {
     } catch { /* storage disabled — the layout just won't persist */ }
   }, [pipPosition, pipSize, pipShape, pipX, pipY])
 
-  // Turn the camera on for the pre-recording placement preview whenever Webcam is
-  // selected and we're not already recording. Released as soon as the webcam is
-  // deselected, recording starts, or the component unmounts.
-  const usesWebcamSource = sources.includes('webcam')
+  // Remember the countdown choice on this device.
   useEffect(() => {
-    if (!usesWebcamSource || !canWebcam || status === 'recording' || status === 'paused') {
-      stopPreviewStream()
-      return
-    }
-    let cancelled = false
-    let localStream: MediaStream | null = null
-    ;(async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: camId ? { deviceId: { exact: camId } } : true,
-          audio: false,
-        })
-        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
-        // Replace any prior preview stream (e.g. after switching cameras).
-        if (previewStreamRef.current && previewStreamRef.current !== stream) {
-          previewStreamRef.current.getTracks().forEach(t => t.stop())
-        }
-        localStream = stream
-        previewStreamRef.current = stream
-        setPreviewStream(stream)
-      } catch { /* denied / no camera — preview just won't render */ }
-    })()
-    return () => {
-      cancelled = true
-      if (localStream) {
-        localStream.getTracks().forEach(t => t.stop())
-        if (previewStreamRef.current === localStream) previewStreamRef.current = null
-      }
-    }
-  }, [usesWebcamSource, canWebcam, camId, status, stopPreviewStream])
+    try {
+      localStorage.setItem(COUNTDOWN_PREFS_KEY, JSON.stringify({ enabled: countdownEnabled, seconds: countdownSeconds }))
+    } catch { /* storage disabled — the choice just won't persist */ }
+  }, [countdownEnabled, countdownSeconds])
+
+  // Nothing turns on until the user presses Preview. Whenever the selected
+  // sources (or the chosen camera) change, drop any live preview and re-arm the
+  // "must preview first" gate so what's shown always matches the new selection.
+  const sourceKey = sources.join(',')
+  useEffect(() => {
+    stopPreviewStream()
+    setScreenShot(null)
+    setHasPreviewed(false)
+  }, [sourceKey, camId, stopPreviewStream])
 
   const stopTick = () => {
     if (tickRef.current !== null) { window.clearInterval(tickRef.current); tickRef.current = null }
@@ -346,10 +364,10 @@ export default function RecorderStudio() {
   // backdrop, then stop the capture immediately. A one-shot still (rather than a
   // live feed) is what avoids the infinite mirror-tunnel you'd get from showing a
   // live view of the very screen you're sharing. The real screen is picked again
-  // for the actual recording — this is only for positioning the overlay.
-  async function grabScreenshot() {
-    setError(null)
-    setGrabbingShot(true)
+  // for the actual recording — this is only for positioning the overlay. Returns
+  // true when a still was captured, false when the picker was declined/cancelled
+  // or the grab failed (so the caller can keep the recording gated).
+  async function grabScreenshot(): Promise<boolean> {
     let stream: MediaStream | null = null
     const video = document.createElement('video')
     // A <video> only delivers frames when it's in the document (a fully detached
@@ -380,25 +398,88 @@ export default function RecorderStudio() {
       canvas.height = video.videoHeight || 720
       canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height)
       setScreenShot(canvas.toDataURL('image/jpeg', 0.85))
+      return true
     } catch (err) {
-      // Cancelling the picker is not an error worth shouting about.
-      if ((err as Error).name !== 'NotAllowedError' && (err as Error).name !== 'AbortError') {
-        setError((err as Error).message || 'Could not capture the screen for the preview.')
-      }
+      const nm = (err as Error).name
+      // Surface the decline clearly (recording stays gated) rather than staying silent.
+      setError(
+        nm === 'NotAllowedError' || nm === 'AbortError'
+          ? 'Screen preview cancelled — choose a screen, window or tab to preview before recording.'
+          : (err as Error).message || 'Could not capture the screen for the preview.',
+      )
+      return false
     } finally {
       stream?.getTracks().forEach(t => t.stop())
       video.srcObject = null
       video.remove()
-      setGrabbingShot(false)
     }
+  }
+
+  // Start the live camera feed for the placement preview. Returns true on
+  // success, false when the camera is blocked/unavailable (recording stays gated).
+  async function startPreviewCamera(): Promise<boolean> {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: camId ? { deviceId: { exact: camId } } : true,
+        audio: false,
+      })
+      // Replace any prior preview stream (e.g. a re-preview or camera switch).
+      if (previewStreamRef.current && previewStreamRef.current !== stream) {
+        previewStreamRef.current.getTracks().forEach(t => t.stop())
+      }
+      previewStreamRef.current = stream
+      setPreviewStream(stream)
+      void refreshCameras() // camera labels resolve once permission is granted
+      return true
+    } catch {
+      setError('Camera access was blocked — allow the camera to preview, then start recording.')
+      return false
+    }
+  }
+
+  // One Preview action that lights up whatever's ticked: a frozen still of the
+  // screen (for the PiP backdrop / to confirm what will be captured) and/or the
+  // live camera. Screen is grabbed first, while the Preview-click user activation
+  // is still fresh (getDisplayMedia needs it). Only flips the "has previewed" gate
+  // when every requested source previewed successfully.
+  async function handlePreview() {
+    if (previewing) return
+    setError(null)
+    setWarning(null)
+    setPreviewing(true)
+    try {
+      let ok = true
+      if (sources.includes('screen') && canScreen) {
+        ok = await grabScreenshot()
+      }
+      if (ok && usesWebcam && canWebcam) {
+        ok = await startPreviewCamera()
+      }
+      if (ok) setHasPreviewed(true)
+    } finally {
+      setPreviewing(false)
+    }
+  }
+
+  // Tear down the preview and re-arm the gate (the "Clear" affordance).
+  function clearPreview() {
+    stopPreviewStream()
+    setScreenShot(null)
+    setHasPreviewed(false)
   }
 
   async function handleStart() {
     setError(null)
     setWarning(null)
     if (sources.length === 0) { setError('Choose at least one source to record.'); return }
+    // A screen/webcam recording must be previewed at least once first.
+    if (usesVisual && !hasPreviewed) {
+      setError('Press Preview first to check your camera / screen, then start recording.')
+      return
+    }
     // Release the placement-preview camera so the recorder can claim it cleanly.
     stopPreviewStream()
+    setStarting(true)
     const rec = new AudioRecorder()
     recorderRef.current = rec
     try {
@@ -408,6 +489,8 @@ export default function RecorderStudio() {
         webcamDeviceId: camId || undefined,
         webcam: sources.includes('webcam') ? overlayConfig() : undefined,
         displaySurface: sources.includes('screen') ? surface : undefined,
+        countdownSeconds: countdownEnabled ? countdownSeconds : 0,
+        onCountdownTick: n => setCountdownLeft(n > 0 ? n : null),
         onLevel: setLevel,
         onWarning: setWarning,
         onEnded: () => { if (recorderRef.current) void handleStop() },
@@ -425,6 +508,9 @@ export default function RecorderStudio() {
           ? 'Permission denied. Allow microphone / screen access and try again.'
           : msg,
       )
+    } finally {
+      setStarting(false)
+      setCountdownLeft(null)
     }
   }
 
@@ -526,7 +612,11 @@ export default function RecorderStudio() {
   const usesDisplay = sources.includes('system') || sources.includes('screen')
   const usesWebcam = sources.includes('webcam')
   const webcamPip = usesWebcam && sources.includes('screen') // camera as a PiP overlay
-  const showPreview = live && (sources.includes('screen') || usesWebcam)
+  // A "visual" recording (screen and/or webcam) must be previewed before it can
+  // start; audio-only (mic / system) starts straight away.
+  const usesVisual = sources.includes('screen') || usesWebcam
+  const startBlockedByPreview = usesVisual && !hasPreviewed
+  const showPreview = live && usesVisual
 
   return (
     <div className={`${CONTAINER} py-8 lg:py-12`}>
@@ -667,28 +757,34 @@ export default function RecorderStudio() {
                 isPip={webcamPip}
                 onDrag={(nx, ny) => { setPipX(nx); setPipY(ny) }}
               />
-              {webcamPip && (
-                <div className="mb-3 flex items-center gap-3">
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handlePreview()}
+                  disabled={previewing}
+                  className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-500 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {previewing
+                    ? 'Starting preview…'
+                    : hasPreviewed
+                      ? '↻ Refresh preview'
+                      : '▶ Preview'}
+                </button>
+                {hasPreviewed && (
                   <button
                     type="button"
-                    onClick={() => void grabScreenshot()}
-                    disabled={grabbingShot}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-orange-300 disabled:opacity-60"
+                    onClick={clearPreview}
+                    className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
                   >
-                    {grabbingShot ? 'Waiting for your screen…' : screenShot ? '↻ Refresh screenshot' : '🖥️ Live preview — use my screen'}
+                    Clear
                   </button>
-                  {screenShot && (
-                    <button
-                      type="button"
-                      onClick={() => setScreenShot(null)}
-                      className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  <span className="text-[11px] text-slate-400">A still frame, grabbed once — no live mirror-tunnel.</span>
-                </div>
-              )}
+                )}
+                <span className="text-[11px] text-slate-400">
+                  {webcamPip
+                    ? 'Turns on your camera and grabs a still of your screen — a one-shot frame, no live mirror-tunnel.'
+                    : 'Turns on your camera so you can frame it before recording.'}
+                </span>
+              </div>
             </>
           )}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -766,6 +862,49 @@ export default function RecorderStudio() {
         </div>
       )}
 
+      {/* Screen-only preview — confirm which screen/window will be captured
+          (a frozen still, grabbed on demand) and satisfy the preview gate. */}
+      {!live && sources.includes('screen') && canScreen && !usesWebcam && (
+        <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4">
+          <div
+            className="relative mb-3 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900"
+            style={{ aspectRatio: '16 / 9' }}
+          >
+            {screenShot ? (
+              <img src={screenShot} alt="Your screen" className="absolute inset-0 h-full w-full object-contain" />
+            ) : (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-medium uppercase tracking-wide text-white/25">
+                  Press Preview to check your screen
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void handlePreview()}
+              disabled={previewing}
+              className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-500 disabled:cursor-wait disabled:opacity-60"
+            >
+              {previewing ? 'Starting preview…' : hasPreviewed ? '↻ Refresh preview' : '▶ Preview'}
+            </button>
+            {hasPreviewed && (
+              <button
+                type="button"
+                onClick={clearPreview}
+                className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            <span className="text-[11px] text-slate-400">
+              Grabs a still of your screen so you can confirm what will be captured — no live mirror-tunnel.
+            </span>
+          </div>
+        </div>
+      )}
+
       <p className="mb-4 text-xs text-slate-500">Tip: tick more than one to record them together.</p>
 
       {isMobile && (
@@ -786,10 +925,12 @@ export default function RecorderStudio() {
         </p>
       )}
 
-      {!isMobile && usesWebcam && (
+      {!isMobile && usesVisual && (
         <p className="mb-4 text-xs text-slate-500">
-          Your browser turns the camera on for a live preview so you can place the overlay before
-          recording. The webcam feed is composited on-device and never uploaded.
+          Press <strong>Preview</strong> to turn on your camera / grab a still of your screen so you
+          can frame everything first — recording stays disabled until you do. Nothing is captured
+          until then, and the {usesWebcam ? 'webcam feed is' : 'screen is'} composited on-device and
+          never uploaded.
         </p>
       )}
 
@@ -810,9 +951,15 @@ export default function RecorderStudio() {
           />
           <span className="text-3xl font-semibold tabular-nums text-slate-900">{fmtTime(elapsed)}</span>
           <span className="text-xs uppercase tracking-wide text-slate-400">
-            {recording ? 'Recording' : paused ? 'Paused' : status === 'done' ? 'Stopped' : 'Ready'}
+            {recording ? 'Recording' : paused ? 'Paused' : status === 'done' ? 'Stopped' : starting ? 'Starting' : 'Ready'}
           </span>
         </div>
+
+        {countdownLeft != null && (
+          <p className="mt-2 text-center text-sm font-semibold text-orange-600" role="status" aria-live="polite">
+            Recording starts in {countdownLeft}…
+          </p>
+        )}
 
         {/* Live self-view while recording video (screen + PiP, or the camera). Kept
             mounted whenever a video source is picked so the effect can bind the
@@ -828,6 +975,40 @@ export default function RecorderStudio() {
         {/* Audio visualisation — animated while recording and while playing back. */}
         <Visualizer level={recording ? level : playbackLevel} active={recording || playing} />
 
+        {/* Pre-record countdown — an audible beep run-in after the screen picker
+            is confirmed, so the start cue is heard even when the user has switched
+            to the app they're demoing. */}
+        {!live && status !== 'done' && (
+          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={countdownEnabled}
+                onChange={e => setCountdownEnabled(e.target.checked)}
+                disabled={starting}
+                className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+              />
+              Beep countdown before recording
+            </label>
+            {countdownEnabled && (
+              <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+                <select
+                  aria-label="Countdown length"
+                  value={countdownSeconds}
+                  onChange={e => setCountdownSeconds(Number(e.target.value))}
+                  disabled={starting}
+                  className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+                >
+                  {COUNTDOWN_CHOICES.map(n => (
+                    <option key={n} value={n}>{n} seconds</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <span className="text-[11px] text-slate-400">Beeps play out loud only — never recorded.</span>
+          </div>
+        )}
+
         <div className={`mt-5 flex flex-wrap items-center gap-3 ${live ? 'justify-center' : ''}`}>
           {!live && status !== 'done' && (
             <>
@@ -837,14 +1018,16 @@ export default function RecorderStudio() {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder={defaultName()}
-                className="flex-1 min-w-[10rem] rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                disabled={starting}
+                className="flex-1 min-w-[10rem] rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
               />
               <button
                 onClick={handleStart}
-                disabled={sources.length === 0}
+                disabled={sources.length === 0 || starting || startBlockedByPreview}
+                title={startBlockedByPreview ? 'Press Preview first to check your camera / screen' : undefined}
                 className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                ● Start recording
+                {starting ? 'Starting…' : '● Start recording'}
               </button>
             </>
           )}
@@ -865,6 +1048,11 @@ export default function RecorderStudio() {
           )}
         </div>
 
+        {!live && startBlockedByPreview && !error && (
+          <p className="mt-4 text-sm text-slate-500">
+            Press <strong>Preview</strong> above to check your {usesWebcam && sources.includes('screen') ? 'camera and screen' : usesWebcam ? 'camera' : 'screen'} — then Start recording unlocks.
+          </p>
+        )}
         {warning && <p className="mt-4 text-sm text-amber-700">{warning}</p>}
         {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
       </section>
