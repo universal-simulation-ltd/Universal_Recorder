@@ -222,6 +222,16 @@ export interface StartOptions {
   onEnded?: () => void
   /** Non-fatal notice, e.g. system audio wasn't shared but we started anyway. */
   onWarning?: (message: string) => void
+  /**
+   * Play an audible beep countdown of this many seconds AFTER the media is
+   * acquired (the screen picker is already confirmed) but BEFORE recording
+   * begins. 0 / undefined → start immediately. The beeps go to the speakers
+   * only, never into the recording. Handy when the user has switched to the app
+   * they're demoing and can't see the page — the tones cue the real start.
+   */
+  countdownSeconds?: number
+  /** Called each second of the countdown with the number remaining (…3, 2, 1, 0). */
+  onCountdownTick?: (secondsLeft: number) => void
 }
 
 export class AudioRecorder {
@@ -392,10 +402,63 @@ export class AudioRecorder {
     this.recorder = new MediaRecorder(recordStream, this.mime ? { mimeType: this.mime } : undefined)
     this.chunks = []
     this.recorder.ondataavailable = e => { if (e.data.size > 0) this.chunks.push(e.data) }
+
+    // Optional audible countdown: everything is captured and the screen picker is
+    // confirmed, so beep the user in before the recorder actually starts. The
+    // beeps play to the speakers only (not the recording graph), so they never
+    // end up in the file.
+    if (opts.countdownSeconds && opts.countdownSeconds > 0) {
+      await this.playCountdown(opts.countdownSeconds, opts.onCountdownTick)
+    }
+
     this.recorder.start(250)
     this.startedAt = performance.now()
     this.pausedTotal = 0
     this.meter()
+  }
+
+  /**
+   * Beep once per second for `seconds`, then a distinct higher/longer tone at 0
+   * that signals recording is about to begin. Resolves shortly after the final
+   * tone so the caller can start the recorder. Uses the existing (already
+   * resumed) AudioContext and routes to `ctx.destination` — the speakers — so
+   * nothing is recorded. Silent (but still timed) if audio output is unavailable.
+   */
+  private playCountdown(seconds: number, onTick?: (n: number) => void): Promise<void> {
+    const ctx = this.ctx
+    const beep = (freq: number, dur: number, atSec: number) => {
+      if (!ctx) return
+      const t = ctx.currentTime + atSec
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      gain.gain.setValueAtTime(0.0001, t)
+      gain.gain.exponentialRampToValueAtTime(0.3, t + 0.012)
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+      osc.start(t)
+      osc.stop(t + dur + 0.03)
+    }
+
+    // One count-beep per second, then the distinct "go" tone on zero.
+    for (let i = 0; i < seconds; i++) beep(880, 0.12, i)
+    beep(1320, 0.26, seconds)
+
+    return new Promise<void>(resolve => {
+      let left = seconds
+      onTick?.(left)
+      const id = window.setInterval(() => {
+        left -= 1
+        onTick?.(Math.max(0, left))
+        if (left <= 0) {
+          window.clearInterval(id)
+          // A short beat after the "go" tone before the recorder actually starts.
+          window.setTimeout(resolve, 280)
+        }
+      }, 1000)
+    })
   }
 
   private trackForCleanup(t: MediaStreamTrack) { this.tracks.push(t) }

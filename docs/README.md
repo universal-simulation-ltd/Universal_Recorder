@@ -23,6 +23,18 @@ nothing is uploaded.
   size, adjustable live) composited via `<canvas>.captureStream()`, a live
   self-view while recording, in-page playback, and local-first recents (play,
   re-download in any format, delete).
+- **Pre-record countdown (beeps):** an optional, configurable audible beep
+  run-in (default 3s, off by default) played *after* the screen picker is
+  confirmed and *before* `MediaRecorder` starts — so the start cue is audible
+  even when the user has switched to the app they're demoing. The beeps go to
+  the speakers only and are never recorded. Persisted in
+  `localStorage['universal-recorder:countdown']` (`{enabled, seconds}`).
+- **Preview gate:** for screen / webcam recordings nothing turns on until the
+  user presses the prominent **Preview** button — one action that lights up
+  whatever's ticked (live camera + a frozen still of the real screen for the PiP
+  backdrop). Start is blocked until a preview has run at least once; audio-only
+  recordings start straight away. The gate re-arms when the selected sources (or
+  camera) change.
 
 The Universal ID session only drives the shared `@unisim/sdk` navbar/profile —
 there is no upload path. MIT licensed — free and open source, like all
