@@ -4,7 +4,8 @@ Record in your browser — **microphone**, **system audio**, your **screen**, an
 **webcam** — in any combination. The webcam composites onto the screen as a
 picture-in-picture overlay. Save as **MP4/WebM** (screen/webcam) or **WebM/MP3/WAV**
 (audio-only). Local-first: recordings are captured, encoded and stored entirely on
-your device (IndexedDB); nothing is uploaded.
+your device (IndexedDB) — nothing is uploaded unless you deliberately press
+**Save to cloud** on one.
 
 Part of the open-source **Universal Apps** family (sibling to Universal PDF /
 Images / QR / Signatures). Served at `opensource.unisim.co.uk/recorder`.
@@ -26,6 +27,16 @@ Images / QR / Signatures). Served at `opensource.unisim.co.uk/recorder`.
   (`lamejs`) transcoded on-device from the decoded audio.
 - **Local-first recents** — finished recordings are kept in IndexedDB; play,
   re-download in any format, or delete.
+- **Save to cloud** (opt-in) — the collapsible **In the cloud** panel sits under
+  *On this device*. A guest is invited to create a free Universal ID; a signed-in
+  user can push any on-device recording to the shared `hosted-uploads` bucket for
+  one reusable **Recorder** token, then play it back, download it, or delete it —
+  deleting returns the token. Backend: `@unisim/sdk` hosted helpers +
+  `hosted_consume_and_record` / `hosted_refund_and_delete` (universal-platform
+  migrations 0041, 0045, 0095). Cloud saves are capped at **50 MB** per file
+  (the bucket limit, and the Supabase Free-plan project ceiling) — hours of
+  Opus audio, but only a couple of minutes of screen video, so long captures
+  stay download-only.
 
 ## Develop
 
@@ -46,5 +57,10 @@ it falls back to the git short SHA (or `dev`).
 
 ## Privacy
 
-Everything runs client-side. The Universal ID session only drives the shared
-navbar/profile — there is **no** upload path. MIT licensed.
+Recording, compositing, encoding and storage all run client-side, and that is the
+only path a guest ever uses. There is exactly **one** upload path and it is
+explicit: pressing **Save to cloud** on a recording, while signed in with a
+Universal ID, uploads that recording's blob to the private `hosted-uploads`
+bucket. Nothing else — no preview, no screen still, no webcam frame, no
+telemetry about the audio — leaves the browser. Deleting the cloud copy removes
+the object and returns the token. MIT licensed.

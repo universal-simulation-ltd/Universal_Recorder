@@ -23,7 +23,8 @@ export default function App() {
       <footer className="border-t border-slate-200 bg-white">
         <div className={`${CONTAINER} py-4 flex flex-row items-center gap-3 text-xs text-slate-500`}>
           <span>
-            100% free — record locally, no paywalls. Recordings never leave your browser. Hosted by{' '}
+            100% free — record locally, no paywalls. Recordings stay in your browser unless you
+            choose to save one to the cloud. Hosted by{' '}
             <a href="https://www.unisim.co.uk" target="_blank" rel="noreferrer" className="text-slate-700 hover:text-orange-600 underline-offset-2 hover:underline">
               UNI SIM
             </a>

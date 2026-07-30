@@ -8,9 +8,12 @@ import './index.css'
 
 console.log(`build: ${import.meta.env.VITE_BUILD_SHA}`)
 
-// Universal Recorder captures and encodes audio entirely client-side —
-// recordings never leave the browser. The Universal ID session (cookie SSO on
-// .unisim.co.uk) only drives the shared navbar/profile; there is no upload.
+// Universal Recorder captures and encodes audio entirely client-side, and the
+// on-device library (IndexedDB) is the default home for a finished recording.
+// The Universal ID session (cookie SSO on .unisim.co.uk) drives the shared
+// navbar/profile and the one opt-in upload path: "Save to cloud", which stores a
+// single recording in the shared `hosted-uploads` bucket against the user's
+// Universal ID for this app's reusable token (see lib/hostedRecordings.ts).
 //
 // The fallback is the REAL public suite project (publishable anon key — safe to
 // ship; RLS is the security boundary). Env vars override it for other builds.
