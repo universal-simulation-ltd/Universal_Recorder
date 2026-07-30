@@ -236,7 +236,9 @@ function SaveToCloudButton({
       }
       className={[
         cls,
-        'transition-colors disabled:cursor-not-allowed',
+        // Pushed to the far right of the button row, away from the downloads —
+        // it's the one action here that leaves the device.
+        'ml-auto transition-colors disabled:cursor-not-allowed',
         stored || saved
           ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
           : 'border-orange-300 bg-orange-50 text-orange-700 hover:border-orange-500 hover:bg-orange-100 disabled:opacity-60',
