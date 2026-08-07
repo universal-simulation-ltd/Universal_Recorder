@@ -71,13 +71,20 @@ function loadOverlayPrefs(): OverlayPrefs {
 // beep countdown plays after the screen picker is confirmed and before recording
 // starts, so the start cue is audible even when the user has switched away to the
 // app they're demoing.
-const COUNTDOWN_PREFS_KEY = 'universal-recorder:countdown'
+// The key is versioned, and `:v2` is what makes the default below take effect for
+// people who have used the app before. v1 wrote the prefs on mount, so everyone
+// who ever opened Recorder has `enabled: false` stored whether or not they ever
+// looked at the toggle — meaning a stored `false` said nothing about intent, and
+// flipping the default would have reached new visitors only. v2 writes only when
+// the user actually changes something (see the persist effect), so from here on a
+// stored value IS a choice and survives any future change of default.
+const COUNTDOWN_PREFS_KEY = 'universal-recorder:countdown:v2'
 interface CountdownPrefs {
   enabled: boolean
   seconds: number
 }
 const COUNTDOWN_CHOICES = [3, 5, 10]
-const DEFAULT_COUNTDOWN_PREFS: CountdownPrefs = { enabled: false, seconds: 3 }
+const DEFAULT_COUNTDOWN_PREFS: CountdownPrefs = { enabled: true, seconds: 3 }
 
 function loadCountdownPrefs(): CountdownPrefs {
   try {
@@ -85,7 +92,7 @@ function loadCountdownPrefs(): CountdownPrefs {
     if (!raw) return DEFAULT_COUNTDOWN_PREFS
     const p = JSON.parse(raw) as Partial<CountdownPrefs>
     const seconds = typeof p.seconds === 'number' && p.seconds > 0 ? p.seconds : DEFAULT_COUNTDOWN_PREFS.seconds
-    return { enabled: p.enabled === true, seconds }
+    return { enabled: typeof p.enabled === 'boolean' ? p.enabled : DEFAULT_COUNTDOWN_PREFS.enabled, seconds }
   } catch {
     return DEFAULT_COUNTDOWN_PREFS
   }
@@ -387,8 +394,18 @@ export default function RecorderStudio() {
     } catch { /* storage disabled — the layout just won't persist */ }
   }, [pipPosition, pipSize, pipShape, pipX, pipY])
 
-  // Remember the countdown choice on this device.
+  // Remember the countdown choice on this device — but only once the user has
+  // actually changed it. Writing on mount is what made v1 of this key useless:
+  // it stored the default for everybody, so nothing distinguished "left it alone"
+  // from "turned it off", and the stored value outranked any later change of
+  // default. Skipping the first run keeps a stored value meaning a real choice.
+  // Compare against the values we started with rather than counting renders —
+  // StrictMode double-invokes effects, and a "skip the first run" counter would
+  // let the second invocation write the default straight back.
+  const countdownPrefsAtLoad = useRef(loadCountdownPrefs())
   useEffect(() => {
+    const initial = countdownPrefsAtLoad.current
+    if (countdownEnabled === initial.enabled && countdownSeconds === initial.seconds) return
     try {
       localStorage.setItem(COUNTDOWN_PREFS_KEY, JSON.stringify({ enabled: countdownEnabled, seconds: countdownSeconds }))
     } catch { /* storage disabled — the choice just won't persist */ }
