@@ -1,6 +1,20 @@
 // On-device transcoding. MediaRecorder gives us WebM/Opus natively; WAV and MP3
 // are produced by decoding that to PCM and re-encoding — nothing is uploaded.
-import { Mp3Encoder } from '@breezystack/lamejs'
+//
+// The encoders themselves live in @unisim/media (0.4.0). Recorder had its own
+// WAV writer and its own LAME loop, and so did Universal Converter and Universal
+// Compress — three implementations of two encoders that no browser provides.
+// §10.6 of Docs_UNI_SIM/next-products.md called for exactly this extraction and
+// named Recorder as its second consumer.
+//
+// ⚠️ The move is a FIX, not just a tidy-up. Recorder's private `floatToInt16`
+// scaled positives by 0x7fff and negatives by 0x8000 (correct) but then
+// TRUNCATED — no rounding — so a value that had decoded as `v/32767` came back
+// one LSB short. Measured in the package's self-tests: every positive int16
+// value survives the shared conversion, while the truncating one loses over a
+// thousand of them. Recorder's WAV export was not bit-exact against a decode of
+// its own recording; it is now.
+import { encodeMp3, encodeWav, nearestLameRate } from '@unisim/media'
 import type { ExportFormat } from './types'
 
 export const FORMAT_META: Record<ExportFormat, { label: string; ext: string; mime: string; hint: string }> = {
@@ -8,6 +22,9 @@ export const FORMAT_META: Record<ExportFormat, { label: string; ext: string; mim
   mp3:  { label: 'MP3',  ext: 'mp3',  mime: 'audio/mpeg', hint: 'Universal · 128 kbps' },
   wav:  { label: 'WAV',  ext: 'wav',  mime: 'audio/wav',  hint: 'Uncompressed · largest' },
 }
+
+/** CBR bitrate for the MP3 export — matches the "128 kbps" the format chip promises. */
+const MP3_KBPS = 128
 
 // Decode any recorded blob (WebM/Opus, etc.) to PCM via the Web Audio API.
 async function decode(blob: Blob): Promise<AudioBuffer> {
@@ -20,76 +37,35 @@ async function decode(blob: Blob): Promise<AudioBuffer> {
   }
 }
 
-function floatToInt16(input: Float32Array): Int16Array {
-  const out = new Int16Array(input.length)
-  for (let i = 0; i < input.length; i++) {
-    const s = Math.max(-1, Math.min(1, input[i]))
-    out[i] = s < 0 ? s * 0x8000 : s * 0x7fff
-  }
-  return out
-}
-
-// 16-bit PCM WAV from an AudioBuffer (mono or stereo, interleaved).
-function audioBufferToWav(buf: AudioBuffer): Blob {
+/** The buffer's channels as the planar Float32 arrays both encoders take.
+ *  Capped at two: LAME accepts no more, and a WAV beyond stereo would need a
+ *  real downmix rather than dropping channels. MediaRecorder never gives us
+ *  more than two from a microphone or a tab capture. */
+function planar(buf: AudioBuffer): Float32Array[] {
   const numCh = Math.min(2, buf.numberOfChannels)
-  const sampleRate = buf.sampleRate
-  const frames = buf.length
-  const bytesPerSample = 2
-  const blockAlign = numCh * bytesPerSample
-  const dataSize = frames * blockAlign
-  const out = new ArrayBuffer(44 + dataSize)
-  const view = new DataView(out)
-
-  const writeStr = (offset: number, s: string) => {
-    for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i))
-  }
-  writeStr(0, 'RIFF')
-  view.setUint32(4, 36 + dataSize, true)
-  writeStr(8, 'WAVE')
-  writeStr(12, 'fmt ')
-  view.setUint32(16, 16, true)          // PCM chunk size
-  view.setUint16(20, 1, true)           // audio format: PCM
-  view.setUint16(22, numCh, true)
-  view.setUint32(24, sampleRate, true)
-  view.setUint32(28, sampleRate * blockAlign, true) // byte rate
-  view.setUint16(32, blockAlign, true)
-  view.setUint16(34, 16, true)          // bits per sample
-  writeStr(36, 'data')
-  view.setUint32(40, dataSize, true)
-
   const channels: Float32Array[] = []
   for (let c = 0; c < numCh; c++) channels.push(buf.getChannelData(c))
-
-  let offset = 44
-  for (let i = 0; i < frames; i++) {
-    for (let c = 0; c < numCh; c++) {
-      const s = Math.max(-1, Math.min(1, channels[c][i]))
-      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true)
-      offset += 2
-    }
-  }
-  return new Blob([out], { type: 'audio/wav' })
+  return channels
 }
 
-// MP3 from an AudioBuffer via lamejs (CBR 128 kbps).
-function audioBufferToMp3(buf: AudioBuffer, kbps = 128): Blob {
-  const numCh = Math.min(2, buf.numberOfChannels)
-  const sampleRate = buf.sampleRate
-  const encoder = new Mp3Encoder(numCh, sampleRate, kbps)
-  const left = floatToInt16(buf.getChannelData(0))
-  const right = numCh > 1 ? floatToInt16(buf.getChannelData(1)) : left
-
-  const chunks: Uint8Array[] = []
-  const blockSize = 1152
-  for (let i = 0; i < left.length; i += blockSize) {
-    const l = left.subarray(i, i + blockSize)
-    const r = right.subarray(i, i + blockSize)
-    const mp3 = numCh > 1 ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l)
-    if (mp3.length > 0) chunks.push(new Uint8Array(mp3))
-  }
-  const flush = encoder.flush()
-  if (flush.length > 0) chunks.push(new Uint8Array(flush))
-  return new Blob(chunks as BlobPart[], { type: 'audio/mpeg' })
+/** Re-render at a sample rate LAME will accept.
+ *
+ *  `decodeAudioData` resamples to the AudioContext's rate, which is the audio
+ *  hardware's — usually 48 kHz, but 88.2 or 96 kHz on a decent interface, and
+ *  LAME takes neither. The old private encoder never checked and would have
+ *  handed the rate straight to LAME; the shared one throws rather than write a
+ *  file that plays at the wrong speed, so resample first, the same way
+ *  Converter and Compress do. */
+async function toLameRate(buf: AudioBuffer): Promise<AudioBuffer> {
+  const target = nearestLameRate(buf.sampleRate)
+  if (target === buf.sampleRate) return buf
+  const channelCount = Math.min(2, buf.numberOfChannels)
+  const ctx = new OfflineAudioContext(channelCount, Math.max(1, Math.ceil(buf.duration * target)), target)
+  const source = ctx.createBufferSource()
+  source.buffer = buf
+  source.connect(ctx.destination)
+  source.start(0)
+  return ctx.startRendering()
 }
 
 // Produce a blob in the requested format. WebM passes through (already the
@@ -97,5 +73,9 @@ function audioBufferToMp3(buf: AudioBuffer, kbps = 128): Blob {
 export async function toFormat(recorded: Blob, format: ExportFormat): Promise<Blob> {
   if (format === 'webm') return recorded
   const pcm = await decode(recorded)
-  return format === 'wav' ? audioBufferToWav(pcm) : audioBufferToMp3(pcm)
+  // WAV carries whatever rate the recording has — no resample, so it stays a
+  // lossless copy of what was captured.
+  if (format === 'wav') return encodeWav(planar(pcm), pcm.sampleRate)
+  const forMp3 = await toLameRate(pcm)
+  return encodeMp3(planar(forMp3), forMp3.sampleRate, MP3_KBPS)
 }
