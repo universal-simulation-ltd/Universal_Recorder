@@ -29,7 +29,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22, because wrangler has required Node >= 22 since 4.87.
+          #
+          # ⚠️ On Node 20 this repo APPEARED to deploy fine, and did not. npm
+          # honours `engines`, so `npm i wrangler@4` quietly resolved to the
+          # newest version Node 20 allows — 4.86.0 — and the deploy ran on a
+          # wrangler 35 releases behind whatever the log said it wanted. The
+          # exact pin below removes that escape hatch, which is how this
+          # surfaced at all.
+          node-version: 22
       - run: npm ci
       - run: npm run build
       - name: Deploy to Cloudflare Pages
