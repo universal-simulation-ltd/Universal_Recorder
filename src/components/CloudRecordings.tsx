@@ -121,7 +121,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
             <button
               type="button"
               onClick={() => cloud.setSignInOpen(true)}
-              className="mt-3 inline-flex rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-500"
+              className="mt-3 inline-flex rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-800"
             >
               Create a free Universal ID →
             </button>
@@ -202,7 +202,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                   href={GET_TOKENS_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-flex rounded-lg bg-orange-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-orange-500"
+                  className="mt-2 inline-flex rounded-lg bg-orange-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-orange-800"
                 >
                   Get tokens →
                 </a>

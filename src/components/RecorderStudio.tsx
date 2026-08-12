@@ -731,7 +731,7 @@ export default function RecorderStudio() {
               <span
                 className={[
                   'absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded border text-[11px] font-bold',
-                  active ? 'border-orange-500 bg-orange-500 text-white' : 'border-slate-300 text-transparent',
+                  active ? 'border-orange-500 bg-orange-700 text-white' : 'border-slate-300 text-transparent',
                 ].join(' ')}
                 aria-hidden="true"
               >
@@ -839,7 +839,7 @@ export default function RecorderStudio() {
                   type="button"
                   onClick={() => void handlePreview()}
                   disabled={previewing}
-                  className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-500 disabled:cursor-wait disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-800 disabled:cursor-wait disabled:opacity-60"
                 >
                   {previewing
                     ? 'Starting preview…'
@@ -962,7 +962,7 @@ export default function RecorderStudio() {
               type="button"
               onClick={() => void handlePreview()}
               disabled={previewing}
-              className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-500 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-800 disabled:cursor-wait disabled:opacity-60"
             >
               {previewing ? 'Starting preview…' : hasPreviewed ? '↻ Refresh preview' : '▶ Preview'}
             </button>
@@ -1102,7 +1102,7 @@ export default function RecorderStudio() {
                 onClick={handleStart}
                 disabled={sources.length === 0 || starting || startBlockedByPreview}
                 title={startBlockedByPreview ? 'Press Preview first to check your camera / screen' : undefined}
-                className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-orange-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {starting ? 'Starting…' : '● Start recording'}
               </button>
@@ -1142,7 +1142,7 @@ export default function RecorderStudio() {
             <h2 className="font-semibold text-slate-900">Your recording — {fmtTime(current.durationSec)}</h2>
             <button
               onClick={handleNew}
-              className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-500"
+              className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-800"
             >
               ＋ New recording
             </button>
