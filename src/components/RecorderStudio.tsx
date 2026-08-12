@@ -696,11 +696,12 @@ export default function RecorderStudio() {
 
   return (
     <div className={`${CONTAINER} py-8 lg:py-12`}>
-      <header className="mb-7">
+      <header className="mb-7 text-center">
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-          Record audio &amp; screen that <span className="text-orange-600">stays on your device</span>.
+          Record audio &amp; screen that{' '}
+          <span className="block text-orange-600">stays on your device.</span>
         </h1>
-        <p className="mt-3 text-slate-600 max-w-xl">
+        <p className="mt-3 text-slate-600 max-w-xl mx-auto">
           Capture your microphone, your system audio, your screen and your webcam — pick any
           combination — then save it. Nothing is uploaded unless you deliberately save a
           recording to the cloud.
@@ -1011,12 +1012,8 @@ export default function RecorderStudio() {
         </p>
       )}
 
-      {/* Transport — only once a source is chosen */}
-      {sources.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-6 text-center text-sm text-slate-500">
-          Choose at least one source above to start recording.
-        </p>
-      ) : (
+      {/* Transport — hidden entirely until a source is chosen */}
+      {sources.length > 0 && (
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-center gap-3">
           <span
