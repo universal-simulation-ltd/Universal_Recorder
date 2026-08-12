@@ -25,7 +25,7 @@ export default function App() {
           <span>
             100% free — record locally, no paywalls. Recordings stay in your browser unless you
             choose to save one to the cloud. Hosted by{' '}
-            <a href="https://www.unisim.co.uk" target="_blank" rel="noreferrer" className="text-slate-700 hover:text-orange-600 underline-offset-2 hover:underline">
+            <a href="https://www.unisim.co.uk" target="_blank" rel="noreferrer" className="text-slate-700 hover:text-orange-700 underline-offset-2 hover:underline">
               UNI SIM
             </a>
           </span>

@@ -1030,7 +1030,7 @@ export default function RecorderStudio() {
         </div>
 
         {countdownLeft != null && (
-          <p className="mt-2 text-center text-sm font-semibold text-orange-600" role="status" aria-live="polite">
+          <p className="mt-2 text-center text-sm font-semibold text-orange-700" role="status" aria-live="polite">
             Recording starts in {countdownLeft}…
           </p>
         )}
@@ -1247,7 +1247,7 @@ export default function RecorderStudio() {
                           }}
                           className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                         />
-                        <button onClick={() => saveRename(r)} className="shrink-0 text-xs font-semibold text-orange-600 hover:text-orange-700">Save</button>
+                        <button onClick={() => saveRename(r)} className="shrink-0 text-xs font-semibold text-orange-700 hover:text-orange-800">Save</button>
                         <button onClick={cancelRename} className="shrink-0 text-xs text-slate-400 hover:text-slate-600">Cancel</button>
                       </div>
                     ) : (
@@ -1261,7 +1261,7 @@ export default function RecorderStudio() {
                     <div className="shrink-0 flex items-center gap-2 text-xs">
                       <button
                         onClick={() => startRename(r)}
-                        className="text-slate-400 hover:text-orange-600"
+                        className="text-slate-400 hover:text-orange-700"
                         aria-label={`Rename ${r.name}`}
                       >
                         Rename
