@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { SignInDialog, useUniversal, type HostedUpload } from '@unisim/sdk'
 import RecordingPlayer from './RecordingPlayer'
-import { downloadHostedRecording, fmtBytes, hostedRecordingUrl } from '../lib/hostedRecordings'
+import { HostedObjectMissingError, downloadHostedRecording, fmtBytes, hostedRecordingUrl } from '../lib/hostedRecordings'
 import type { Cloud } from '../lib/useCloud'
 
 const HUB_LOGIN_URL = 'https://app.unisim.co.uk/login'
@@ -28,6 +28,8 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
   const [playing, setPlaying] = useState<{ id: string; url: string; hasVideo: boolean } | null>(null)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [playError, setPlayError] = useState<string | null>(null)
+  // The one listed cloud recording that turned out to have no file behind it.
+  const [missingId, setMissingId] = useState<string | null>(null)
 
   // The open clip's object URL is revoked explicitly whenever it's replaced or
   // closed; the ref exists only so unmount can revoke the last one. (A
@@ -42,6 +44,12 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
     setPlaying(next)
   }
 
+  // Deleting clears the dead-entry notice with the row it belongs to.
+  async function onRemove(upload: HostedUpload) {
+    await cloud.remove(upload)
+    setMissingId(id => (id === upload.id ? null : id))
+  }
+
   // A signed-out user has nothing in the cloud, so the count is only meaningful
   // once signed in.
   const count = cloud.signedIn ? cloud.uploads.length : 0
@@ -49,6 +57,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
   async function onPlay(upload: HostedUpload) {
     if (loadingId) return
     setPlayError(null)
+    setMissingId(null)
     if (playing?.id === upload.id) {
       openClip(null)
       return
@@ -58,20 +67,30 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
       const { url, hasVideo } = await hostedRecordingUrl(supabase, upload)
       openClip({ id: upload.id, url, hasVideo })
     } catch (err) {
-      setPlayError((err as Error).message)
+      reportError(upload, err)
     } finally {
       setLoadingId(null)
     }
   }
 
+  // A genuinely absent file is not an error to shrug at the user — it is a dead
+  // entry, and the only useful thing to say is which one and what to do about
+  // it. Anything else (offline, session expired) still surfaces as an ordinary
+  // message, because deleting the recording would be the wrong advice.
+  function reportError(upload: HostedUpload, err: unknown) {
+    if (err instanceof HostedObjectMissingError) setMissingId(upload.id)
+    else setPlayError((err as Error).message)
+  }
+
   async function onDownload(upload: HostedUpload) {
     if (loadingId) return
     setPlayError(null)
+    setMissingId(null)
     setLoadingId(upload.id)
     try {
       await downloadHostedRecording(supabase, upload)
     } catch (err) {
-      setPlayError((err as Error).message)
+      reportError(upload, err)
     } finally {
       setLoadingId(null)
     }
@@ -169,7 +188,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                         ⬇
                       </button>
                       <button
-                        onClick={() => void cloud.remove(u)}
+                        onClick={() => void onRemove(u)}
                         disabled={cloud.busy}
                         title="Delete the cloud copy and refund the token"
                         className="shrink-0 rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:text-red-600 disabled:opacity-50"
@@ -177,6 +196,33 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                         {cloud.busyId === u.id ? 'Deleting…' : 'Delete'}
                       </button>
                     </div>
+                    {/* A cloud recording with nothing behind it. Say which one,
+                        say plainly that the upload never finished, and make
+                        clearing it up one click — the token comes back with it,
+                        so there is nothing to lose by tidying. This replaces
+                        storage's bare "Object not found", which read like the
+                        app had mislaid the user's recording. */}
+                    {missingId === u.id && (
+                      <div
+                        role="alert"
+                        data-testid="hosted-missing"
+                        className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2"
+                      >
+                        <p className="text-[11px] leading-snug text-amber-900">
+                          <strong className="font-semibold">{u.file_name || 'This recording'}</strong> is listed here,
+                          but there is no file behind it — this upload never finished, so nothing was ever
+                          saved. Your token is still being held for it.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => void onRemove(u)}
+                          disabled={cloud.busy}
+                          className="mt-2 inline-flex rounded-md bg-amber-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
+                        >
+                          Remove this entry and get the token back
+                        </button>
+                      </div>
+                    )}
                     {playing?.id === u.id && (
                       <RecordingPlayer
                         key={playing.url}

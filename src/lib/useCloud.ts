@@ -13,6 +13,7 @@ import {
   deleteHostedRecording,
   storeRecording,
 } from './hostedRecordings'
+import { safeStem } from './hostedPaths'
 import type { StoredRecording } from './types'
 
 // All the "save to cloud" state in one place, so the Save-to-cloud button on each
@@ -58,18 +59,10 @@ export interface Cloud {
   remove: (upload: HostedUpload) => Promise<void>
 }
 
-/** Match a cloud row back to the on-device recording it came from — the object
- *  name is `<upload_id>-<slugged recording name>.<ext>`, and the ledger keeps
- *  the same `<slug>.<ext>` as `file_name`. */
-function slugOf(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-      .slice(0, 60) || 'recording'
-  )
-}
+// Matching a cloud row back to the on-device recording it came from uses the
+// SAME slug the object name is built from (`<object_id>-<slug>.<ext>`, with
+// `<slug>.<ext>` kept on the ledger as `file_name`) — hence `safeStem` from
+// `hostedPaths`, rather than the second copy of it that used to live here.
 
 export function useCloud(): Cloud {
   const { supabase, session, activeOrgId } = useUniversal()
@@ -91,7 +84,7 @@ export function useCloud(): Cloud {
 
   const isStored = useCallback(
     (rec: StoredRecording) => {
-      const stem = slugOf(rec.name)
+      const stem = safeStem(rec.name)
       return uploads.some(u => (u.file_name ?? '').replace(/\.[^.]+$/, '') === stem)
     },
     [uploads],

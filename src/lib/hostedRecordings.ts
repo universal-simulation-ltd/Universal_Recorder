@@ -4,6 +4,13 @@ import {
   HOSTED_BUCKET,
   type HostedUpload,
 } from '@unisim/sdk'
+import {
+  HOSTED_PRODUCT,
+  hostedRecordingPath,
+  hostedRecordingPathCandidates,
+  newObjectId,
+  safeStem,
+} from './hostedPaths'
 import type { StoredRecording } from './types'
 
 // "Hosted by UNI·SIM" cloud storage for Universal Recorder. Recording, encoding
@@ -17,8 +24,10 @@ import type { StoredRecording } from './types'
 
 type Supabase = Parameters<typeof consumeHostedUpload>[0]
 
-/** SDK product code — must match `product` in main.tsx and the usage enum. */
-export const PRODUCT = 'recorder'
+/** SDK product code — must match `product` in main.tsx and the usage enum.
+ *  Re-exported from `hostedPaths` so the object path and the product code can
+ *  never disagree. */
+export const PRODUCT = HOSTED_PRODUCT
 
 /** The bucket's per-file ceiling (0041), which is also the Supabase Free-plan
  *  project-wide upload limit. Checked before the token is reserved so an
@@ -53,9 +62,24 @@ export async function storeRecording(
   }
 
   const fileName = `${safeStem(rec.name)}.${nativeExt(rec)}`
+
+  // ⚠️ NAME THE OBJECT FIRST. This used to reserve the row with a placeholder
+  // `storagePath: 'pending'`, upload, then UPDATE the row with the real path —
+  // and that update silently did nothing on every account that isn't the
+  // platform admin, because `hosted_uploads` grants members SELECT and nothing
+  // else (0041). So the ledger kept saying `pending`, the panel listed a cloud
+  // recording, and Play asked storage for an object named `pending`: "Object
+  // not found", for a file that had uploaded perfectly. See `hostedPaths.ts`
+  // for the full write-up and the legacy recovery.
+  //
+  // A client-side object id removes the round trip the RLS was blocking: the
+  // path is known before the token is reserved, so the RPC records the truth
+  // at insert time and there is no second write to fail.
+  const path = hostedRecordingPath(orgId, newObjectId(), fileName)
+
   const consumed = await consumeHostedUpload(supabase, {
     product: PRODUCT,
-    storagePath: 'pending',
+    storagePath: path,
     fileName,
     sizeBytes: rec.blob.size,
   })
@@ -63,7 +87,6 @@ export async function storeRecording(
     return { ok: false, error: consumed.error ?? 'Could not reserve a token.' }
   }
 
-  const path = `${orgId}/${PRODUCT}/${consumed.upload_id}-${fileName}`
   const { error: upErr } = await supabase.storage
     .from(HOSTED_BUCKET)
     .upload(path, rec.blob, { contentType: contentType(rec), upsert: true })
@@ -73,20 +96,68 @@ export async function storeRecording(
     return { ok: false, error: upErr.message }
   }
 
-  await supabase.from('hosted_uploads').update({ storage_path: path }).eq('id', consumed.upload_id)
   return { ok: true, creditsRemaining: consumed.credits }
 }
 
 /** Delete a cloud recording — the storage object first (member RLS allows it),
- *  then the ledger row, which refunds the token. */
+ *  then the ledger row, which refunds the token.
+ *
+ *  Removes EVERY path the bytes could be under, not just the one the ledger
+ *  names: a legacy row says `pending`, so deleting only that would refund the
+ *  token and leave the real recording — up to 50 MB of it — orphaned in the
+ *  bucket forever, with the row that pointed at it gone. */
 export async function deleteHostedRecording(
   supabase: Supabase,
   upload: HostedUpload,
 ): Promise<StoreResult> {
-  await supabase.storage.from(HOSTED_BUCKET).remove([upload.storage_path])
+  await supabase.storage.from(HOSTED_BUCKET).remove(hostedRecordingPathCandidates(upload))
   const res = await refundHostedUpload(supabase, upload.id)
   if (!res.ok) return { ok: false, error: res.error ?? 'Could not refund the token.' }
   return { ok: true, creditsRemaining: res.credits }
+}
+
+/**
+ * Thrown when a listed cloud recording has no object behind it anywhere we know
+ * to look.
+ *
+ * A distinct type so the panel can answer honestly — name the recording, say
+ * the upload never completed, and offer to clear the entry and take the token
+ * back — instead of surfacing storage's bare "Object not found", which reads
+ * like the app has lost the user's recording.
+ */
+export class HostedObjectMissingError extends Error {
+  readonly fileName: string
+  constructor(fileName: string) {
+    super(`"${fileName}" is listed as saved to the cloud, but there is no file behind it.`)
+    this.name = 'HostedObjectMissingError'
+    this.fileName = fileName
+  }
+}
+
+/**
+ * Fetch a cloud recording's bytes, trying every candidate path in turn (see
+ * `hostedRecordingPathCandidates`), so the recordings the old three-step store
+ * flow filed as `pending` still play: their bytes are in the bucket under the
+ * name the uploader used, which is fully recoverable from the row itself. Only
+ * when nothing is there does this throw `HostedObjectMissingError`, so the
+ * caller can offer the cleanup.
+ */
+async function downloadHostedBlob(supabase: Supabase, upload: HostedUpload): Promise<Blob> {
+  let lastError: string | null = null
+
+  for (const path of hostedRecordingPathCandidates(upload)) {
+    const { data, error } = await supabase.storage.from(HOSTED_BUCKET).download(path)
+    if (data && !error) return data
+    lastError = error?.message ?? null
+  }
+
+  // Every candidate missed. Distinguish "not there" from "could not ask" — a
+  // dropped connection or an expired session must NOT be reported as a dead
+  // recording, or the user is invited to delete one that is perfectly fine.
+  if (lastError && !/not.?found|does not exist|404/i.test(lastError)) {
+    throw new Error(lastError)
+  }
+  throw new HostedObjectMissingError(upload.file_name || 'recording')
 }
 
 /** Download a cloud recording and hand back an object URL for playback. The
@@ -96,8 +167,7 @@ export async function hostedRecordingUrl(
   supabase: Supabase,
   upload: HostedUpload,
 ): Promise<{ url: string; hasVideo: boolean }> {
-  const { data, error } = await supabase.storage.from(HOSTED_BUCKET).download(upload.storage_path)
-  if (error || !data) throw new Error(error?.message ?? 'Could not download the recording.')
+  const data = await downloadHostedBlob(supabase, upload)
   // We upload with an explicit `video/*` or `audio/*` Content-Type (see
   // `contentType` below), so the downloaded blob's type tells us which element
   // to render. `.webm` alone can't — it's both containers.
@@ -109,8 +179,7 @@ export async function downloadHostedRecording(
   supabase: Supabase,
   upload: HostedUpload,
 ): Promise<void> {
-  const { data, error } = await supabase.storage.from(HOSTED_BUCKET).download(upload.storage_path)
-  if (error || !data) throw new Error(error?.message ?? 'Could not download the recording.')
+  const data = await downloadHostedBlob(supabase, upload)
   const url = URL.createObjectURL(data)
   const a = document.createElement('a')
   a.href = url
@@ -135,14 +204,3 @@ function contentType(rec: StoredRecording): string {
   return ext === 'mp4' ? 'audio/mp4' : 'audio/webm'
 }
 
-/** Keep the object name to a safe slug (the recording's default name is a
- *  locale date string, which is full of separators). */
-function safeStem(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-      .slice(0, 60) || 'recording'
-  )
-}
