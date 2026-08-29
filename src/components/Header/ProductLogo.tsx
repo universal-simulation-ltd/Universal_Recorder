@@ -32,13 +32,19 @@ export default function ProductLogo() {
     >
       <style>{CSS}</style>
       <svg viewBox="0 0 64 64" className="h-6 w-6" aria-hidden="true">
-        <rect x="0" y="0" width="64" height="64" rx="14" fill="#0f172a" />
-        <rect x={25} y={11} width={14} height={26} rx={7} fill="none" strokeWidth={4.4} stroke="#fe8c01" />
-        <path d="M18 28a14 14 0 0 0 28 0" fill="none" strokeWidth={4.4} strokeLinecap="round" stroke="#fe8c01" className="uam-recorder-cradle" />
-        <path d="M32 43V51" strokeWidth={4.4} strokeLinecap="round" stroke="#fe8c01" fill="none" />
-        <path d="M23 51h18" strokeWidth={4.4} strokeLinecap="round" stroke="#ff9a1f" fill="none" />
-        <path d="M11 22a22 22 0 0 0 0 20" fill="none" strokeWidth={3.4} strokeLinecap="round" stroke="#ff9a1f" className="uam-recorder-level" />
-        <path d="M53 22a22 22 0 0 1 0 20" fill="none" strokeWidth={3.4} strokeLinecap="round" stroke="#ff9a1f" className="uam-recorder-level2" />
+        <defs>
+          <linearGradient id="uam-nav-recorder-tile" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#fe8c01" />
+            <stop offset="1" stopColor="#e05504" />
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="14" fill="url(#uam-nav-recorder-tile)" />
+        <rect x={25} y={11} width={14} height={26} rx={7} fill="none" strokeWidth={4.4} stroke="#ffffff" />
+        <path d="M18 28a14 14 0 0 0 28 0" fill="none" strokeWidth={4.4} strokeLinecap="round" stroke="#ffffff" className="uam-recorder-cradle" />
+        <path d="M32 43V51" strokeWidth={4.4} strokeLinecap="round" stroke="#ffffff" fill="none" />
+        <path d="M23 51h18" strokeWidth={4.4} strokeLinecap="round" stroke="#fed7aa" fill="none" />
+        <path d="M11 22a22 22 0 0 0 0 20" fill="none" strokeWidth={3.4} strokeLinecap="round" stroke="#fed7aa" className="uam-recorder-level" />
+        <path d="M53 22a22 22 0 0 1 0 20" fill="none" strokeWidth={3.4} strokeLinecap="round" stroke="#fed7aa" className="uam-recorder-level2" />
       </svg>
     </span>
   )

@@ -3,11 +3,17 @@
      Regenerate: node scripts/app-marks/build.mjs (from backoffice/universal-platform)
      Mark: Universal Recorder — A microphone in its cradle. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Universal Recorder">
-  <rect x="0" y="0" width="64" height="64" rx="14" fill="#0f172a"/>
-  <rect x="25" y="11" width="14" height="26" rx="7" fill="none" stroke-width="4.4" stroke="#fe8c01"/>
-  <path d="M18 28a14 14 0 0 0 28 0" fill="none" stroke-width="4.4" stroke-linecap="round" stroke="#fe8c01"/>
-  <path d="M32 43V51" stroke-width="4.4" stroke-linecap="round" stroke="#fe8c01" fill="none"/>
-  <path d="M23 51h18" stroke-width="4.4" stroke-linecap="round" stroke="#ff9a1f" fill="none"/>
-  <path d="M11 22a22 22 0 0 0 0 20" fill="none" stroke-width="3.4" stroke-linecap="round" stroke="#ff9a1f"/>
-  <path d="M53 22a22 22 0 0 1 0 20" fill="none" stroke-width="3.4" stroke-linecap="round" stroke="#ff9a1f"/>
+  <defs>
+    <linearGradient id="u-recorder-tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fe8c01"/>
+      <stop offset="1" stop-color="#e05504"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#u-recorder-tile)"/>
+  <rect x="25" y="11" width="14" height="26" rx="7" fill="none" stroke-width="4.4" stroke="#ffffff"/>
+  <path d="M18 28a14 14 0 0 0 28 0" fill="none" stroke-width="4.4" stroke-linecap="round" stroke="#ffffff"/>
+  <path d="M32 43V51" stroke-width="4.4" stroke-linecap="round" stroke="#ffffff" fill="none"/>
+  <path d="M23 51h18" stroke-width="4.4" stroke-linecap="round" stroke="#fed7aa" fill="none"/>
+  <path d="M11 22a22 22 0 0 0 0 20" fill="none" stroke-width="3.4" stroke-linecap="round" stroke="#fed7aa"/>
+  <path d="M53 22a22 22 0 0 1 0 20" fill="none" stroke-width="3.4" stroke-linecap="round" stroke="#fed7aa"/>
 </svg>
