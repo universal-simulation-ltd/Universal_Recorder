@@ -1,4 +1,4 @@
-import { UniversalAppsNavBar, UpdateNotice } from '@unisim/sdk'
+import { AdvancedMenu, UniversalAppsNavBar, UpdateNotice } from '@unisim/sdk'
 import ProductLogo from './components/Header/ProductLogo'
 import RecorderStudio from './components/RecorderStudio'
 import { CONTAINER } from './lib/layout'
@@ -11,6 +11,20 @@ export default function App() {
       <UniversalAppsNavBar
         product="recorder"
         productLogo={<ProductLogo />}
+        actions={
+          /* Advanced — the SDK's own category, so every app in the suite has
+             one in the same place, and whatever goes in it next is one change
+             rather than nineteen. "About this app" is always its last row. */
+          <AdvancedMenu
+            about={{
+              repo:    'https://github.com/universal-simulation-ltd/Universal_Recorder',
+              subject: 'Your recording',
+              except:  'saving it to your account',
+              headline: 'Other recorders upload your recording to their servers to process it.',
+              version: __APP_VERSION__,
+            }}
+          />
+        }
         productHomeHref={import.meta.env.BASE_URL}
         suiteSwitcherIconSrc={`${import.meta.env.BASE_URL}unisim-icon.png`}
         contentClassName={CONTAINER}
