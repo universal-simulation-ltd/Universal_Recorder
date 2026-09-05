@@ -28,6 +28,57 @@
     <meta name="twitter:title" content="Universal Recorder — record audio in your browser, free" />
     <meta name="twitter:description" content="Record your microphone, your system audio, or both — entirely in your browser. Free and open source." />
     <meta name="twitter:image" content="https://opensource.unisim.co.uk/recorder/og-image.png" />
+    <!-- Structured data. The credit James asked for on 2026-09-05 lives in two
+         places, and this is the one a search engine can read: the in-app line
+         is in the SDK's <AboutAppDialog>, which is a React portal and only
+         enters the DOM once somebody opens it, so a crawler never sees it.
+
+         Every value below is taken from THIS FILE's own <title>, description
+         and canonical rather than typed again, so the block cannot drift from
+         what the page already says about itself. The author matches the app's
+         marketing page on unisim.co.uk and points at the same /about-james,
+         so both resolve to one person rather than two mentions of a name. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Universal Recorder",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web browser",
+      "url": "https://opensource.unisim.co.uk/recorder/",
+      "description": "Universal Recorder — record your microphone, your system audio, or both, entirely in your browser. 100% free and open source; recordings stay on your device. Save as WebM, MP3 or WAV, or self-host for free.",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "GBP"
+      },
+      "author": [
+        {
+          "@type": "Person",
+          "name": "James Markey",
+          "honorificSuffix": "MBE",
+          "jobTitle": "Founder & Director",
+          "url": "https://www.unisim.co.uk/about-james"
+        },
+        {
+          "@type": "Organization",
+          "name": "UNI·SIM",
+          "url": "https://www.unisim.co.uk",
+          "subjectOf": {
+            "@type": "BlogPosting",
+            "name": "Welcome to the UNI·SIM studio",
+            "url": "https://www.unisim.co.uk/blog/welcome-to-uni-sim"
+          }
+        }
+      ],
+      "provider": {
+        "@type": "Organization",
+        "name": "UNI·SIM",
+        "url": "https://www.unisim.co.uk"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
