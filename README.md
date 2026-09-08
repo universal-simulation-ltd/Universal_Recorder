@@ -63,4 +63,4 @@ explicit: pressing **Save to cloud** on a recording, while signed in with a
 Universal ID, uploads that recording's blob to the private `hosted-uploads`
 bucket. Nothing else — no preview, no screen still, no webcam frame, no
 telemetry about the audio — leaves the browser. Deleting the cloud copy removes
-the object and returns the token. MIT licensed.
+the object and returns the token.

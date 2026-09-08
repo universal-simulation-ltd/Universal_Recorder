@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "description": "Universal Recorder — record audio in your browser (microphone, system audio, or both) and save it as WebM, MP3 or WAV. Local-first; nothing leaves your device.",
   "scripts": {
     "dev": "vite",
