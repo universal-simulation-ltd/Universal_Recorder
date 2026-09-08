@@ -1,4 +1,9 @@
 import { AdvancedMenu, UniversalAppsNavBar, UpdateNotice } from '@unisim/sdk'
+// Generated — `npm run credits` after any dependency change. Never edit it by
+// hand: it is read off the installed tree, so a hand-kept list drifts from the
+// lockfile the first time anyone upgrades anything, and a credits list naming a
+// package we removed is worse than no list at all.
+import credits from './generated/credits.json'
 import ProductLogo from './components/Header/ProductLogo'
 import RecorderStudio from './components/RecorderStudio'
 import { CONTAINER } from './lib/layout'
@@ -22,6 +27,8 @@ export default function App() {
               except:  'saving it to your account',
               headline: 'Other recorders upload your recording to their servers to process it.',
               version: __APP_VERSION__,
+              credits,
+              noticesHref: 'https://github.com/universal-simulation-ltd/Universal_Recorder/blob/main/THIRD-PARTY-NOTICES.md',
             }}
           />
         }
