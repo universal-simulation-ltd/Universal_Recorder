@@ -134,8 +134,8 @@ export default function RecordingPlayer({ url, hasVideo, onLevel, onPlayingChang
         ? <video {...commonProps} className="w-full rounded-lg bg-black" />
         : <audio {...commonProps} className="w-full" />}
       {!ready && (
-        <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg bg-white/80 text-sm text-slate-600 backdrop-blur-sm">
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-orange-500" />
+        <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg bg-white/80 text-sm text-slate-600 backdrop-blur-sm dark:bg-slate-900/80 dark:text-slate-300">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-orange-500 dark:border-slate-600 dark:border-t-orange-500" />
           Preparing playback…
         </div>
       )}

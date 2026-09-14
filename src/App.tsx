@@ -1,37 +1,28 @@
-import { AdvancedMenu, UniversalAppsNavBar, UpdateNotice } from '@unisim/sdk'
-// Generated — `npm run credits` after any dependency change. Never edit it by
-// hand: it is read off the installed tree, so a hand-kept list drifts from the
-// lockfile the first time anyone upgrades anything, and a credits list naming a
-// package we removed is worse than no list at all.
-import credits from './generated/credits.json'
+import { UniversalAppsNavBar, UpdateNotice } from '@unisim/sdk'
+import AppMenu from './components/Header/AppMenu'
 import ProductLogo from './components/Header/ProductLogo'
 import RecorderStudio from './components/RecorderStudio'
 import { CONTAINER } from './lib/layout'
+import { useThemeStore } from './stores/themeStore'
 
 const REPO_URL = 'https://github.com/universal-simulation-ltd/Universal_Recorder'
 
 export default function App() {
+  // The RESOLVED theme ('system' already turned into light or dark). The SDK's
+  // bar and dropdowns are inline-styled and cannot read the `.dark` class, so
+  // they are told which one to paint; everything of ours themes off the class
+  // with `dark:` variants.
+  const theme = useThemeStore((s) => s.effective)
+
   return (
-    <div className="flex flex-col min-h-screen bg-slate-100">
+    <div className="flex flex-col min-h-screen bg-slate-100 dark:bg-slate-950">
       <UniversalAppsNavBar
         product="recorder"
         productLogo={<ProductLogo />}
-        actions={
-          /* Advanced — the SDK's own category, so every app in the suite has
-             one in the same place, and whatever goes in it next is one change
-             rather than nineteen. "About this app" is always its last row. */
-          <AdvancedMenu
-            about={{
-              repo:    'https://github.com/universal-simulation-ltd/Universal_Recorder',
-              subject: 'Your recording',
-              except:  'saving it to your account',
-              headline: 'Other recorders upload your recording to their servers to process it.',
-              version: __APP_VERSION__,
-              credits,
-              noticesHref: 'https://github.com/universal-simulation-ltd/Universal_Recorder/blob/main/THIRD-PARTY-NOTICES.md',
-            }}
-          />
-        }
+        theme={theme}
+        /* The theme choice and the SDK's Advanced category (About lives there) —
+           see components/Header/AppMenu.tsx. */
+        actions={<AppMenu theme={theme} />}
         productHomeHref={import.meta.env.BASE_URL}
         suiteSwitcherIconSrc={`${import.meta.env.BASE_URL}unisim-icon.png`}
         contentClassName={CONTAINER}
@@ -57,14 +48,14 @@ export default function App() {
         <RecorderStudio />
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className={`${CONTAINER} py-4 flex flex-row items-center gap-3 text-xs text-slate-500`}>
+      <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className={`${CONTAINER} py-4 flex flex-row items-center gap-3 text-xs text-slate-500 dark:text-slate-400`}>
           <span>
             With{' '}
-            <span aria-hidden="true" className="text-orange-600">&hearts;</span>
+            <span aria-hidden="true" className="text-orange-600 dark:text-orange-500">&hearts;</span>
             <span className="sr-only">love</span>{' '}
             from{' '}
-            <a href="https://www.unisim.co.uk" target="_blank" rel="noreferrer" className="text-slate-700 hover:text-orange-700 underline-offset-2 hover:underline">
+            <a href="https://www.unisim.co.uk" target="_blank" rel="noreferrer" className="text-slate-700 hover:text-orange-700 underline-offset-2 hover:underline dark:text-slate-300 dark:hover:text-orange-400">
               UNISIM.co.uk
             </a>
           </span>
@@ -73,7 +64,7 @@ export default function App() {
             target="_blank"
             rel="noreferrer"
             aria-label="Universal Recorder on GitHub"
-            className="ml-auto shrink-0 inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition-colors"
+            className="ml-auto shrink-0 inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-400 dark:hover:text-slate-100"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
               <path d="M12 .5C5.65.5.5 5.65.5 12.02c0 5.09 3.29 9.4 7.86 10.92.57.1.78-.25.78-.55 0-.27-.01-1-.02-1.96-3.2.69-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.95.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.89-.39.98 0 1.97.13 2.89.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.18 1.82 1.18 3.08 0 4.42-2.69 5.39-5.26 5.68.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .3.21.66.79.55 4.57-1.52 7.86-5.83 7.86-10.92C23.5 5.65 18.35.5 12 .5z" />

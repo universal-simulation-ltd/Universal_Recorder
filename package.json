@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "credits": "node ../scripts/gen-credits.mjs . --repo https://github.com/universal-simulation-ltd/Universal_Recorder",
-    "test:hosted-paths": "node --experimental-strip-types scripts/hostedPath.test.mjs"
+    "test:hosted-paths": "node --experimental-strip-types scripts/hostedPath.test.mjs",
+    "test:theme": "node scripts/theme.test.mjs"
   },
   "dependencies": {
     "@breezystack/lamejs": "^1.2.7",

@@ -107,7 +107,7 @@ export default function OverlayDesigner({ stream, backdrop, shape, size, positio
     <div className="mb-2">
       <div
         ref={stageRef}
-        className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900"
+        className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700"
         style={{ aspectRatio: backdrop && isPip ? bgAspect : '16 / 9' }}
       >
         {isPip ? (
@@ -172,7 +172,7 @@ export default function OverlayDesigner({ stream, backdrop, shape, size, positio
           />
         )}
       </div>
-      <p className="mt-1.5 text-[11px] text-slate-500">
+      <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
         {isPip
           ? backdrop
             ? 'Drag the camera to place it over your screen. Pick a shape and size — your layout is remembered on this device.'

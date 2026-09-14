@@ -104,13 +104,13 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
   return (
     <section className="mt-6">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-xs uppercase tracking-wide text-slate-500 font-medium">
+        <h2 className="text-xs uppercase tracking-wide text-slate-500 font-medium dark:text-slate-400">
           <button
             type="button"
             onClick={() => setOpen(o => !o)}
             aria-expanded={open}
             aria-controls="cloud-list"
-            className="inline-flex items-center gap-1.5 uppercase tracking-wide hover:text-slate-700"
+            className="inline-flex items-center gap-1.5 uppercase tracking-wide hover:text-slate-700 dark:hover:text-slate-200"
           >
             <span
               aria-hidden
@@ -133,11 +133,11 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
       <div id="cloud-list" hidden={!open}>
         {!cloud.signedIn ? (
           /* Guest — the whole point of opening this panel. */
-          <div className="rounded-xl border border-orange-200 bg-white p-4">
-            <p className="text-sm font-semibold text-slate-900">
+          <div className="rounded-xl border border-orange-200 bg-white p-4 dark:border-orange-900/60 dark:bg-slate-900">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               Create a Universal ID to save a recording to cloud
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Your recordings live in this browser only. A free Universal ID lets you keep one
               recording online — reach it from any device, and get your token straight back when
               you delete it.
@@ -151,9 +151,9 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
             </button>
           </div>
         ) : (
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs text-slate-500">
-              Saved online against <strong className="font-medium text-slate-700">{cloud.email}</strong>.
+          <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Saved online against <strong className="font-medium text-slate-700 dark:text-slate-200">{cloud.email}</strong>.
               One token per recording — delete the cloud copy and your token comes straight back.
             </p>
 
@@ -161,16 +161,16 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
               <p className="mt-3 text-xs text-slate-400">Loading…</p>
             ) : cloud.uploads.length === 0 ? (
               <p className="mt-3 text-xs text-slate-400">
-                Nothing here yet — press <strong className="font-medium text-slate-500">☁ Save to cloud</strong> on
+                Nothing here yet — press <strong className="font-medium text-slate-500 dark:text-slate-300">☁ Save to cloud</strong> on
                 any recording under “On this device”.
               </p>
             ) : (
               <ul className="mt-3 space-y-2">
                 {cloud.uploads.map(u => (
-                  <li key={u.id} className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                  <li key={u.id} className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-950">
                     <div className="flex items-center gap-2">
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-slate-700">
+                        <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                           {u.file_name || 'recording'}
                         </span>
                         <span className="block text-[10px] text-slate-400">
@@ -181,14 +181,14 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                       <button
                         onClick={() => void onPlay(u)}
                         disabled={loadingId !== null}
-                        className="shrink-0 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-orange-400 disabled:opacity-50"
+                        className="shrink-0 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-orange-500 disabled:opacity-50"
                       >
                         {loadingId === u.id ? 'Loading…' : playing?.id === u.id ? 'Close' : '▶ Play'}
                       </button>
                       <button
                         onClick={() => void onDownload(u)}
                         disabled={loadingId !== null}
-                        className="shrink-0 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-orange-400 disabled:opacity-50"
+                        className="shrink-0 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-orange-500 disabled:opacity-50"
                       >
                         ⬇
                       </button>
@@ -196,7 +196,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                         onClick={() => void onRemove(u)}
                         disabled={cloud.busy}
                         title="Delete the cloud copy and refund the token"
-                        className="shrink-0 rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:text-red-600 disabled:opacity-50"
+                        className="shrink-0 rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
                       >
                         {cloud.busyId === u.id ? 'Deleting…' : 'Delete'}
                       </button>
@@ -211,9 +211,9 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                       <div
                         role="alert"
                         data-testid="hosted-missing"
-                        className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2"
+                        className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 dark:border-amber-900/60 dark:bg-amber-950/40"
                       >
-                        <p className="text-[11px] leading-snug text-amber-900">
+                        <p className="text-[11px] leading-snug text-amber-900 dark:text-amber-200">
                           <strong className="font-semibold">{u.file_name || 'This recording'}</strong> is listed here,
                           but there is no file behind it — this upload never finished, so nothing was ever
                           saved. Your token is still being held for it.
@@ -243,8 +243,8 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
             )}
 
             {!cloud.canSave && cloud.freeToken !== null && (
-              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="text-sm text-amber-800">
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/60 dark:bg-amber-950/40">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
                   {cloud.freeToken === 'held'
                     ? 'Your free Recorder token is in use — delete the cloud recording above to get it back, or add tokens.'
                     : 'You have no tokens left.'}
@@ -260,7 +260,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
               </div>
             )}
 
-            {playError && <p className="mt-2 text-sm text-red-700">{playError}</p>}
+            {playError && <p className="mt-2 text-sm text-red-700 dark:text-red-400">{playError}</p>}
           </div>
         )}
       </div>
@@ -268,7 +268,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
       {/* Outside the collapsible: a Save to cloud press on a device recording can
           fail while this panel is shut, and the reason must still be readable. */}
       {cloud.error && (
-        <p className="mt-2 text-sm text-red-700" role="status" aria-live="polite">
+        <p className="mt-2 text-sm text-red-700 dark:text-red-400" role="status" aria-live="polite">
           {cloud.error}
         </p>
       )}

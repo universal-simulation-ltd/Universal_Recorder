@@ -9,6 +9,7 @@ import { MAX_CLOUD_BYTES, fmtBytes } from '../lib/hostedRecordings'
 import { useCloud, type Cloud } from '../lib/useCloud'
 import type { ExportFormat, PipPosition, PipShape, PipSize, Source, StoredRecording, WebcamOverlay } from '../lib/types'
 import OverlayDesigner from './OverlayDesigner'
+import { useThemeStore } from '../stores/themeStore'
 
 type Status = 'idle' | 'recording' | 'paused' | 'done'
 
@@ -183,6 +184,9 @@ function Visualizer({ level, active }: { level: number; active: boolean }) {
   const bars = 28
   const t = performance.now() / 1000
   const colour = level > 0.8 ? '#dc2626' : level > 0.5 ? '#f59e0b' : '#f97316'
+  // The resting bars are chrome (the visualiser is never recorded), so they
+  // follow the theme; light keeps its original slate-300 exactly.
+  const dark = useThemeStore((s) => s.effective) === 'dark'
   return (
     <div className="mt-4 flex items-center justify-center gap-[3px] h-10" aria-hidden="true">
       {Array.from({ length: bars }).map((_, i) => {
@@ -194,7 +198,7 @@ function Visualizer({ level, active }: { level: number; active: boolean }) {
             className="w-1 rounded-full"
             style={{
               height: `${h * 100}%`,
-              background: active ? colour : '#cbd5e1',
+              background: active ? colour : dark ? '#475569' : '#cbd5e1',
               transition: 'height 90ms linear',
             }}
           />
@@ -247,8 +251,8 @@ function SaveToCloudButton({
         // it's the one action here that leaves the device.
         'ml-auto transition-colors disabled:cursor-not-allowed',
         stored || saved
-          ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-          : 'border-orange-300 bg-orange-50 text-orange-700 hover:border-orange-500 hover:bg-orange-100 disabled:opacity-60',
+          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+          : 'border-orange-300 bg-orange-50 text-orange-700 hover:border-orange-500 hover:bg-orange-100 disabled:opacity-60 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300 dark:hover:border-orange-500 dark:hover:bg-orange-900/40',
       ].join(' ')}
     >
       {saving ? 'Saving…' : saved || stored ? '☁ In the cloud' : '☁ Save to cloud'}
@@ -697,11 +701,11 @@ export default function RecorderStudio() {
   return (
     <div className={`${CONTAINER} py-8 lg:py-12`}>
       <header className="mb-7 text-center">
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           Record audio &amp; screen that{' '}
-          <span className="block text-orange-600">stays on your device.</span>
+          <span className="block text-orange-600 dark:text-orange-400">stays on your device.</span>
         </h1>
-        <p className="mt-3 text-slate-600 max-w-xl mx-auto">
+        <p className="mt-3 text-slate-600 max-w-xl mx-auto dark:text-slate-300">
           Capture your microphone, your system audio, your screen and your webcam — pick any
           combination — then save it. Nothing is uploaded unless you deliberately save a
           recording to the cloud.
@@ -725,24 +729,24 @@ export default function RecorderStudio() {
                 'relative text-left rounded-xl border p-4 transition-colors disabled:cursor-not-allowed',
                 s.disabled ? 'opacity-50' : 'disabled:opacity-60',
                 active
-                  ? 'border-orange-500 bg-orange-50/60 ring-1 ring-orange-500/30'
-                  : 'border-slate-200 bg-white hover:border-orange-300',
+                  ? 'border-orange-500 bg-orange-50/60 ring-1 ring-orange-500/30 dark:bg-orange-950/40'
+                  : 'border-slate-200 bg-white hover:border-orange-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-orange-700',
               ].join(' ')}
             >
               <span
                 className={[
                   'absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded border text-[11px] font-bold',
-                  active ? 'border-orange-500 bg-orange-700 text-white' : 'border-slate-300 text-transparent',
+                  active ? 'border-orange-500 bg-orange-700 text-white' : 'border-slate-300 text-transparent dark:border-slate-600',
                 ].join(' ')}
                 aria-hidden="true"
               >
                 ✓
               </span>
               <div className="text-2xl">{s.icon}</div>
-              <div className="mt-1 font-semibold text-slate-900">{s.label}</div>
-              <div className="text-xs text-slate-500">{s.blurb}</div>
+              <div className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{s.label}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">{s.blurb}</div>
               {s.disabled && s.note && (
-                <div className="mt-1 text-[11px] font-medium text-amber-600">{s.note}</div>
+                <div className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">{s.note}</div>
               )}
             </button>
           )
@@ -759,7 +763,7 @@ export default function RecorderStudio() {
               value={micId}
               onChange={e => setMicId(e.target.value)}
               disabled={live}
-              className="lg:col-start-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+              className="lg:col-start-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
               <option value="">Default microphone</option>
               {mics.map((m, i) => (
@@ -779,7 +783,7 @@ export default function RecorderStudio() {
               onChange={() => {}}
               disabled={live}
               title="System audio captures all sound playing on this device"
-              className="lg:col-start-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+              className="lg:col-start-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
               <option value="all">All audio</option>
             </select>
@@ -791,7 +795,7 @@ export default function RecorderStudio() {
               onChange={e => setSurface(e.target.value as 'monitor' | 'window' | 'browser')}
               disabled={live}
               title="Which surface the share picker opens on (Chrome — you still confirm)"
-              className="lg:col-start-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+              className="lg:col-start-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
               <option value="monitor">Entire screen</option>
               <option value="window">A window</option>
@@ -805,7 +809,7 @@ export default function RecorderStudio() {
               onChange={e => setCamId(e.target.value)}
               disabled={live}
               title="Which camera to use for the webcam overlay"
-              className="lg:col-start-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+              className="lg:col-start-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
               <option value="">Default camera</option>
               {cameras.map((c, i) => (
@@ -821,7 +825,7 @@ export default function RecorderStudio() {
       {/* Webcam overlay controls — a live drag-to-place preview plus the shape,
           position and size. All can be changed live while recording. */}
       {usesWebcam && canWebcam && (
-        <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4">
+        <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           {!live && (
             <>
               <OverlayDesigner
@@ -852,7 +856,7 @@ export default function RecorderStudio() {
                   <button
                     type="button"
                     onClick={clearPreview}
-                    className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
+                    className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
                   >
                     Clear
                   </button>
@@ -867,7 +871,7 @@ export default function RecorderStudio() {
           )}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Overlay position</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Overlay position</span>
               <div className="flex flex-wrap gap-1.5">
                 {PIP_POSITIONS.map(p => (
                   <button
@@ -880,8 +884,8 @@ export default function RecorderStudio() {
                     className={[
                       'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                       pipPosition === p.id && pipX === null
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300',
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-700',
                     ].join(' ')}
                   >
                     {p.label}
@@ -890,7 +894,7 @@ export default function RecorderStudio() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Size</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Size</span>
               <div className="flex gap-1.5">
                 {PIP_SIZES.map(sz => (
                   <button
@@ -901,8 +905,8 @@ export default function RecorderStudio() {
                     className={[
                       'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                       pipSize === sz.id
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300',
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-700',
                     ].join(' ')}
                   >
                     {sz.label}
@@ -911,7 +915,7 @@ export default function RecorderStudio() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Shape</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Shape</span>
               <div className="flex gap-1.5">
                 {PIP_SHAPES.map(sh => (
                   <button
@@ -922,8 +926,8 @@ export default function RecorderStudio() {
                     className={[
                       'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                       pipShape === sh.id
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300',
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-700',
                     ].join(' ')}
                   >
                     {sh.label}
@@ -932,7 +936,7 @@ export default function RecorderStudio() {
               </div>
             </div>
           </div>
-          <p className="mt-2 text-[11px] text-slate-500">
+          <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
             {webcamPip
               ? 'Drag the camera in the preview to place it anywhere; shape, position and size can all be changed while recording too.'
               : 'Add Screen to overlay the camera as a picture-in-picture — otherwise the webcam records full-frame.'}
@@ -943,9 +947,9 @@ export default function RecorderStudio() {
       {/* Screen-only preview — confirm which screen/window will be captured
           (a frozen still, grabbed on demand) and satisfy the preview gate. */}
       {!live && sources.includes('screen') && canScreen && !usesWebcam && (
-        <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4">
+        <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <div
-            className="relative mb-3 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900"
+            className="relative mb-3 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700"
             style={{ aspectRatio: '16 / 9' }}
           >
             {screenShot ? (
@@ -971,7 +975,7 @@ export default function RecorderStudio() {
               <button
                 type="button"
                 onClick={clearPreview}
-                className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
+                className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
               >
                 Clear
               </button>
@@ -983,17 +987,17 @@ export default function RecorderStudio() {
         </div>
       )}
 
-      <p className="mb-4 text-xs text-slate-500">Tip: tick more than one to record them together.</p>
+      <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Tip: tick more than one to record them together.</p>
 
       {isMobile && (
-        <p className="mb-4 text-xs text-slate-500">
+        <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
           On mobile, only microphone recording is available — system-audio and screen capture aren’t
           supported by mobile browsers.
         </p>
       )}
 
       {!isMobile && usesDisplay && (
-        <p className="mb-4 text-xs text-slate-500">
+        <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
           When the share picker opens, choose a tab, window or screen
           {sources.includes('system') && <> and tick <strong>Share audio</strong> to include system audio</>}.
           {sources.includes('system') && !sources.includes('screen') && (
@@ -1004,7 +1008,7 @@ export default function RecorderStudio() {
       )}
 
       {!isMobile && usesVisual && (
-        <p className="mb-4 text-xs text-slate-500">
+        <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
           Press <strong>Preview</strong> to turn on your camera / grab a still of your screen so you
           can frame everything first — recording stays disabled until you do. Nothing is captured
           until then, and the {usesWebcam ? 'webcam feed is' : 'screen is'} composited on-device and
@@ -1014,23 +1018,23 @@ export default function RecorderStudio() {
 
       {/* Transport — hidden entirely until a source is chosen */}
       {sources.length > 0 && (
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-center gap-3">
           <span
             className={[
               'inline-block w-3 h-3 rounded-full',
-              recording ? 'bg-red-600 rec-dot' : paused ? 'bg-amber-500' : 'bg-slate-300',
+              recording ? 'bg-red-600 rec-dot' : paused ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600',
             ].join(' ')}
             aria-hidden="true"
           />
-          <span className="text-3xl font-semibold tabular-nums text-slate-900">{fmtTime(elapsed)}</span>
+          <span className="text-3xl font-semibold tabular-nums text-slate-900 dark:text-slate-100">{fmtTime(elapsed)}</span>
           <span className="text-xs uppercase tracking-wide text-slate-400">
             {recording ? 'Recording' : paused ? 'Paused' : status === 'done' ? 'Stopped' : starting ? 'Starting' : 'Ready'}
           </span>
         </div>
 
         {countdownLeft != null && (
-          <p className="mt-2 text-center text-sm font-semibold text-orange-700" role="status" aria-live="polite">
+          <p className="mt-2 text-center text-sm font-semibold text-orange-700 dark:text-orange-400" role="status" aria-live="polite">
             Recording starts in {countdownLeft}…
           </p>
         )}
@@ -1043,7 +1047,7 @@ export default function RecorderStudio() {
           muted
           playsInline
           autoPlay
-          className={`mx-auto mt-4 w-full max-w-md rounded-lg border border-slate-200 bg-black ${showPreview ? '' : 'hidden'}`}
+          className={`mx-auto mt-4 w-full max-w-md rounded-lg border border-slate-200 bg-black dark:border-slate-700 ${showPreview ? '' : 'hidden'}`}
         />
 
         {/* Audio visualisation — animated while recording and while playing back. */}
@@ -1054,7 +1058,7 @@ export default function RecorderStudio() {
             to the app they're demoing. */}
         {!live && status !== 'done' && (
           <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               <input
                 type="checkbox"
                 checked={countdownEnabled}
@@ -1065,13 +1069,13 @@ export default function RecorderStudio() {
               Beep countdown before recording
             </label>
             {countdownEnabled && (
-              <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+              <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                 <select
                   aria-label="Countdown length"
                   value={countdownSeconds}
                   onChange={e => setCountdownSeconds(Number(e.target.value))}
                   disabled={starting}
-                  className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+                  className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 >
                   {COUNTDOWN_CHOICES.map(n => (
                     <option key={n} value={n}>{n} seconds</option>
@@ -1093,7 +1097,7 @@ export default function RecorderStudio() {
                 onChange={e => setName(e.target.value)}
                 placeholder={defaultName()}
                 disabled={starting}
-                className="flex-1 min-w-[10rem] rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60"
+                className="flex-1 min-w-[10rem] rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-400"
               />
               <button
                 onClick={handleStart}
@@ -1106,37 +1110,37 @@ export default function RecorderStudio() {
             </>
           )}
           {recording && (
-            <button onClick={handlePause} className="rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+            <button onClick={handlePause} className="rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
               ❚❚ Pause
             </button>
           )}
           {paused && (
-            <button onClick={handleResume} className="rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+            <button onClick={handleResume} className="rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
               ▶ Resume
             </button>
           )}
           {live && (
-            <button onClick={handleStop} className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700">
+            <button onClick={handleStop} className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300">
               ■ Stop
             </button>
           )}
         </div>
 
         {!live && startBlockedByPreview && !error && (
-          <p className="mt-4 text-sm text-slate-500">
+          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
             Press <strong>Preview</strong> above to check your {usesWebcam && sources.includes('screen') ? 'camera and screen' : usesWebcam ? 'camera' : 'screen'} — then Start recording unlocks.
           </p>
         )}
-        {warning && <p className="mt-4 text-sm text-amber-700">{warning}</p>}
-        {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
+        {warning && <p className="mt-4 text-sm text-amber-700 dark:text-amber-400">{warning}</p>}
+        {error && <p className="mt-4 text-sm text-red-700 dark:text-red-400">{error}</p>}
       </section>
       )}
 
       {/* Result */}
       {status === 'done' && current && (
-        <section className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6">
+        <section className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 dark:border-emerald-900/60 dark:bg-emerald-950/30">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-semibold text-slate-900">Your recording — {fmtTime(current.durationSec)}</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">Your recording — {fmtTime(current.durationSec)}</h2>
             <button
               onClick={handleNew}
               className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-800"
@@ -1154,12 +1158,12 @@ export default function RecorderStudio() {
             />
           )}
           <div className="mt-4">
-            <div className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5">Download as</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5 dark:text-slate-400">Download as</div>
             <div className="flex flex-wrap gap-2">
               {current.hasVideo ? (
                 <button
                   onClick={() => handleDownloadNative(current)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-orange-500"
                 >
                   ⬇ {nativeExt(current).toUpperCase()} video
                 </button>
@@ -1169,7 +1173,7 @@ export default function RecorderStudio() {
                     key={f}
                     onClick={() => handleDownload(current, f)}
                     disabled={busyFormat !== null}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400 disabled:opacity-60 disabled:cursor-wait"
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-orange-500 disabled:opacity-60 disabled:cursor-wait"
                     title={FORMAT_META[f].hint}
                   >
                     {busyFormat === `${current.id}:${f}` ? 'Encoding…' : `⬇ ${FORMAT_META[f].label}`}
@@ -1186,13 +1190,13 @@ export default function RecorderStudio() {
       {recents.length > 0 && (
         <section className="mt-8">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="text-xs uppercase tracking-wide text-slate-500 font-medium">
+            <h2 className="text-xs uppercase tracking-wide text-slate-500 font-medium dark:text-slate-400">
               <button
                 type="button"
                 onClick={() => setRecentsOpen(o => !o)}
                 aria-expanded={recentsOpen}
                 aria-controls="recents-list"
-                className="inline-flex items-center gap-1.5 uppercase tracking-wide hover:text-slate-700"
+                className="inline-flex items-center gap-1.5 uppercase tracking-wide hover:text-slate-700 dark:hover:text-slate-200"
               >
                 <span
                   aria-hidden
@@ -1205,18 +1209,18 @@ export default function RecorderStudio() {
             </h2>
             {confirmingClearAll ? (
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-slate-500">
+                <span className="text-slate-500 dark:text-slate-400">
                   Delete all {recents.length}? This can't be undone.
                 </span>
                 <button
                   onClick={() => void handleDeleteAll()}
-                  className="font-semibold text-red-600 hover:text-red-700"
+                  className="font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                 >
                   Yes, delete
                 </button>
                 <button
                   onClick={() => setConfirmingClearAll(false)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
                   Cancel
                 </button>
@@ -1224,7 +1228,7 @@ export default function RecorderStudio() {
             ) : (
               <button
                 onClick={() => setConfirmingClearAll(true)}
-                className="text-xs text-slate-400 hover:text-red-600"
+                className="text-xs text-slate-400 hover:text-red-600 dark:hover:text-red-400"
               >
                 Delete all
               </button>
@@ -1232,7 +1236,7 @@ export default function RecorderStudio() {
           </div>
           <ul id="recents-list" hidden={!recentsOpen} className="space-y-2">
             {recents.map(r => (
-              <li key={r.id} className="rounded-xl border border-slate-200 bg-white p-3">
+              <li key={r.id} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     {renamingId === r.id ? (
@@ -1245,15 +1249,15 @@ export default function RecorderStudio() {
                             if (e.key === 'Enter') void saveRename(r)
                             else if (e.key === 'Escape') cancelRename()
                           }}
-                          className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                         />
-                        <button onClick={() => saveRename(r)} className="shrink-0 text-xs font-semibold text-orange-700 hover:text-orange-800">Save</button>
-                        <button onClick={cancelRename} className="shrink-0 text-xs text-slate-400 hover:text-slate-600">Cancel</button>
+                        <button onClick={() => saveRename(r)} className="shrink-0 text-xs font-semibold text-orange-700 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300">Save</button>
+                        <button onClick={cancelRename} className="shrink-0 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">Cancel</button>
                       </div>
                     ) : (
-                      <div className="font-medium text-slate-800 truncate">{r.name}</div>
+                      <div className="font-medium text-slate-800 truncate dark:text-slate-100">{r.name}</div>
                     )}
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
                       {fmtTime(r.durationSec)} · {sourceLabels(r)}{r.hasVideo ? ' · video' : ''}
                     </div>
                   </div>
@@ -1261,14 +1265,14 @@ export default function RecorderStudio() {
                     <div className="shrink-0 flex items-center gap-2 text-xs">
                       <button
                         onClick={() => startRename(r)}
-                        className="text-slate-400 hover:text-orange-700"
+                        className="text-slate-400 hover:text-orange-700 dark:hover:text-orange-400"
                         aria-label={`Rename ${r.name}`}
                       >
                         Rename
                       </button>
                       <button
                         onClick={() => handleDelete(r.id)}
-                        className="text-slate-400 hover:text-red-600"
+                        className="text-slate-400 hover:text-red-600 dark:hover:text-red-400"
                         aria-label={`Delete ${r.name}`}
                       >
                         Delete
@@ -1280,7 +1284,7 @@ export default function RecorderStudio() {
                   {r.hasVideo ? (
                     <button
                       onClick={() => handleDownloadNative(r)}
-                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400"
+                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-500"
                     >
                       {nativeExt(r).toUpperCase()} video
                     </button>
@@ -1290,7 +1294,7 @@ export default function RecorderStudio() {
                         key={f}
                         onClick={() => handleDownload(r, f)}
                         disabled={busyFormat !== null}
-                        className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400 disabled:opacity-60 disabled:cursor-wait"
+                        className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-500 disabled:opacity-60 disabled:cursor-wait"
                       >
                         {busyFormat === `${r.id}:${f}` ? 'Encoding…' : FORMAT_META[f].label}
                       </button>
