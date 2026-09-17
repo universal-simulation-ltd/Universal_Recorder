@@ -45,6 +45,9 @@ const head = html.slice(0, html.indexOf('</head>'))
 
 console.log(`the pre-paint theme script (key: ${key}):`)
 check(head.includes(`localStorage.getItem('${key}')`), 'reads the same localStorage key as the theme store')
+// Since SDK 0.143 the app's key is an override: absent, the global choice
+// applies, and the pre-paint script has to know that as well as the store does.
+check(head.includes("localStorage.getItem('universal:color-scheme')"), "falls back to Global preferences' universal:color-scheme when the app has no override")
 check(head.includes("classList.add('dark')"), 'puts the dark class on <html> before anything is painted')
 // 'system' has to be honoured here too, or somebody on the OS setting gets the
 // light ground first and the dark one once the bundle catches up.

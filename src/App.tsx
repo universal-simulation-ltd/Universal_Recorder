@@ -20,8 +20,12 @@ export default function App() {
         product="recorder"
         productLogo={<ProductLogo />}
         theme={theme}
-        /* The theme choice and the SDK's Advanced category (About lives there) —
-           see components/Header/AppMenu.tsx. */
+        /* This app's colour scheme override (Follow global / Light / Dark /
+           System) lives in the SDK's App preferences dialog since SDK 0.143 —
+           it used to be Appearance rows in the menu below. */
+        themeStore={useThemeStore}
+        /* The SDK's Advanced category (About lives there) — see
+           components/Header/AppMenu.tsx. */
         actions={<AppMenu theme={theme} />}
         productHomeHref={import.meta.env.BASE_URL}
         suiteSwitcherIconSrc={`${import.meta.env.BASE_URL}unisim-icon.png`}
