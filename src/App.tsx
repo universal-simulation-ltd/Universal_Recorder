@@ -1,11 +1,28 @@
-import { UniversalAppsNavBar, UpdateNotice } from '@unisim/sdk'
-import AppMenu from './components/Header/AppMenu'
+import { UniversalAppsNavBar, UpdateNotice, type AboutAppConfig } from '@unisim/sdk'
+// Generated — `npm run credits` after any dependency change. Never edit it by
+// hand: it is read off the installed tree, so a hand-kept list drifts from the
+// lockfile the first time anyone upgrades anything, and a credits list naming a
+// package we removed is worse than no list at all.
+import credits from './generated/credits.json'
 import ProductLogo from './components/Header/ProductLogo'
 import RecorderStudio from './components/RecorderStudio'
 import { CONTAINER } from './lib/layout'
 import { useThemeStore } from './stores/themeStore'
 
 const REPO_URL = 'https://github.com/universal-simulation-ltd/Universal_Recorder'
+
+// "About this app". Since SDK 0.161 the SDK draws the row at the foot of "Tune
+// this app" and opens its own AboutAppDialog; it used to be the only row in an
+// actions menu (components/Header/AppMenu.tsx, now gone).
+const ABOUT: AboutAppConfig = {
+  repo:    REPO_URL,
+  subject: 'Your recording',
+  except:  'saving it to your account',
+  headline: 'Other recorders upload your recording to their servers to process it.',
+  version: __APP_VERSION__,
+  credits,
+  noticesHref: `${REPO_URL}/blob/main/THIRD-PARTY-NOTICES.md`,
+}
 
 export default function App() {
   // The RESOLVED theme ('system' already turned into light or dark). The SDK's
@@ -24,9 +41,7 @@ export default function App() {
            System) lives in the SDK's App preferences dialog since SDK 0.143 —
            it used to be Appearance rows in the menu below. */
         themeStore={useThemeStore}
-        /* The SDK's Advanced category (About lives there) — see
-           components/Header/AppMenu.tsx. */
-        actions={<AppMenu theme={theme} />}
+        about={ABOUT}
         productHomeHref={import.meta.env.BASE_URL}
         suiteSwitcherIconSrc={`${import.meta.env.BASE_URL}unisim-icon.png`}
         contentClassName={CONTAINER}
