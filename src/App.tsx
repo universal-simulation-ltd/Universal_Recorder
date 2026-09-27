@@ -8,6 +8,7 @@ import ProductLogo from './components/Header/ProductLogo'
 import RecorderStudio from './components/RecorderStudio'
 import { CONTAINER } from './lib/layout'
 import { useThemeStore } from './stores/themeStore'
+import { KNOWLEDGE_BASE } from './knowledge'
 
 const REPO_URL = 'https://github.com/universal-simulation-ltd/Universal_Recorder'
 
@@ -41,6 +42,9 @@ export default function App() {
            System) lives in the SDK's App preferences dialog since SDK 0.143 —
            it used to be Appearance rows in the menu below. */
         themeStore={useThemeStore}
+        // Actions ▸ Advanced ▸ Knowledge base (SDK 0.163.0): this app's own
+        // articles, bundled from ./knowledge so they read offline.
+        knowledgeBase={KNOWLEDGE_BASE}
         about={ABOUT}
         productHomeHref={import.meta.env.BASE_URL}
         suiteSwitcherIconSrc={`${import.meta.env.BASE_URL}unisim-icon.png`}
