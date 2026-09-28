@@ -160,7 +160,7 @@ Lo spazio del browser è comodo, ma non è un backup. Per tutto ciò che conta, 
 
 ## Chi può accedervi
 
-La copia nel cloud è conservata in uno spazio privato e non ha un link pubblico. Si può raggiungere solo effettuando l’accesso, e solo da parte dei membri dell’organizzazione Universal ID con cui è stata salvata. Se condividi quell’organizzazione con altre persone, per esempio un team, anche loro possono accedervi. Viaggia da e verso lo spazio di archiviazione tramite una connessione cifrata.
+La copia nel cloud è conservata in uno spazio privato e non ha un link pubblico. Solo tu puoi raggiungerla, accedendo con l’Universal ID con cui l’hai salvata. Se il tuo Universal ID appartiene a un’azienda con altre persone, ogni registrazione nel cloud ha una casella **Share with** nel pannello **In the cloud**. All’inizio non è spuntata. Spuntala e tutti nella tua azienda potranno riprodurre e scaricare quella registrazione, ma solo tu potrai eliminarla. Togli la spunta per renderla di nuovo privata. Viaggia da e verso lo spazio di archiviazione tramite una connessione cifrata.
 
 ## Usarla da un altro dispositivo
 

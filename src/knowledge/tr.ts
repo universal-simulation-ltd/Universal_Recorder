@@ -160,7 +160,7 @@ Tarayıcı depolaması kullanışlıdır ama bir yedek değildir. Önemli olan h
 
 ## Kimler erişebilir
 
-Buluttaki kopya özel bir depolama alanında tutulur ve herkese açık bir bağlantısı yoktur. Yalnızca oturum açılarak ve yalnızca kaydedildiği Universal ID kuruluşunun üyeleri tarafından erişilebilir. Bu kuruluşu bir ekip gibi başka kişilerle paylaşıyorsanız, onlar da erişebilir. Depolama alanına gidip gelirken şifreli bir bağlantı kullanılır.
+Buluttaki kopya özel bir depolama alanında tutulur ve herkese açık bir bağlantısı yoktur. Ona yalnızca siz, kaydettiğiniz Universal ID ile oturum açarak erişebilirsiniz. Universal ID'niz başka kişilerin de bulunduğu bir şirkete aitse, **In the cloud** panelindeki her bulut kaydında bir **Share with** kutusu bulunur. Kutu başta işaretsizdir. İşaretlerseniz şirketinizdeki herkes o kaydı oynatıp indirebilir, ancak yalnızca siz silebilirsiniz. Kaydı yeniden özel yapmak için işareti kaldırın. Depolama alanına gidip gelirken şifreli bir bağlantı kullanılır.
 
 ## Başka bir cihazdan kullanmak
 

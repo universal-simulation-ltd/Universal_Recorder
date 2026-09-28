@@ -99,7 +99,31 @@ export async function storeRecording(
   return { ok: true, creditsRemaining: consumed.credits }
 }
 
-/** Delete a cloud recording — the storage object first (member RLS allows it),
+/** Share one of your own cloud recordings with your company, or stop sharing
+ *  (migration 0194). A cloud recording is private to the person who saved it
+ *  until they choose this; only the saver can change it, and sharing lets
+ *  colleagues play and download it — never delete it. */
+export async function setRecordingShared(
+  supabase: Supabase,
+  uploadId: string,
+  shared: boolean,
+): Promise<StoreResult> {
+  const { data, error } = await supabase.rpc('hosted_set_shared', {
+    p_upload_id: uploadId,
+    p_shared: shared,
+  })
+  if (error) return { ok: false, error: error.message }
+  const res = (data ?? {}) as { ok?: boolean; error?: string }
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: res.error === 'not_found' ? 'Only the person who saved a recording can share it.' : res.error,
+    }
+  }
+  return { ok: true }
+}
+
+/** Delete a cloud recording — the storage object first (the saver's storage RLS allows it, 0194),
  *  then the ledger row, which refunds the token.
  *
  *  Removes EVERY path the bytes could be under, not just the one the ledger

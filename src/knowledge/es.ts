@@ -160,7 +160,7 @@ El almacenamiento del navegador es cómodo, pero no es una copia de seguridad. P
 
 ## Quién puede acceder
 
-La copia en la nube se guarda en un almacenamiento privado y no tiene enlace público. Solo se puede acceder a ella iniciando sesión, y solo si se es miembro de la organización de Universal ID con la que se guardó. Si comparte esa organización con otras personas, por ejemplo un equipo, ellas también pueden acceder. Viaja hacia y desde el almacenamiento mediante una conexión cifrada.
+La copia en la nube se guarda en un almacenamiento privado y no tiene enlace público. Solo usted puede acceder a ella, iniciando sesión con el Universal ID con el que la guardó. Si su Universal ID pertenece a una empresa con más personas, cada grabación en la nube tiene una casilla **Share with** en el panel **In the cloud**. Empieza sin marcar. Márquela y todas las personas de su empresa podrán reproducir y descargar esa grabación, pero solo usted podrá eliminarla. Desmárquela para que vuelva a ser privada. Viaja hacia y desde el almacenamiento mediante una conexión cifrada.
 
 ## Usarla desde otro dispositivo
 

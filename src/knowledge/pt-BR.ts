@@ -160,7 +160,7 @@ O armazenamento do navegador é prático, mas não é um backup. Para tudo o que
 
 ## Quem pode acessar
 
-A cópia na nuvem fica num armazenamento privado e não tem link público. Ela só pode ser acessada fazendo login, e só por membros da organização do Universal ID em que foi salva. Se você compartilha essa organização com outras pessoas, como uma equipe, elas também podem acessá-la. Ela vai e volta do armazenamento por uma conexão criptografada.
+A cópia na nuvem fica num armazenamento privado e não tem link público. Só você pode acessá-la, fazendo login com o Universal ID em que a salvou. Se o seu Universal ID pertence a uma empresa com outras pessoas, cada gravação na nuvem tem uma caixa **Share with** no painel **In the cloud**. Ela começa desmarcada. Marque-a e todos na sua empresa poderão reproduzir e baixar essa gravação, mas só você poderá excluí-la. Desmarque-a para que ela volte a ser privada. Ela vai e volta do armazenamento por uma conexão criptografada.
 
 ## Usar em outro aparelho
 

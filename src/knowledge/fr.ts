@@ -160,7 +160,7 @@ Le stockage du navigateur est pratique, mais ce n’est pas une sauvegarde. Pour
 
 ## Qui peut y accéder
 
-La copie dans le cloud est conservée dans un espace de stockage privé et n’a pas de lien public. On ne peut y accéder qu’en se connectant, et seulement si l’on est membre de l’organisation Universal ID sous laquelle elle a été enregistrée. Si vous partagez cette organisation avec d’autres personnes, par exemple une équipe, elles peuvent aussi y accéder. Elle transite vers et depuis le stockage par une connexion chiffrée.
+La copie dans le cloud est conservée dans un espace de stockage privé et n’a pas de lien public. Vous seul pouvez y accéder, en vous connectant avec l’Universal ID sous lequel vous l’avez enregistrée. Si votre Universal ID appartient à une entreprise qui compte d’autres personnes, chaque enregistrement dans le cloud a une case **Share with** dans le panneau **In the cloud**. Elle est décochée au départ. Cochez-la et toutes les personnes de votre entreprise pourront lire et télécharger cet enregistrement, mais vous seul pourrez le supprimer. Décochez-la pour le rendre à nouveau privé. Elle transite vers et depuis le stockage par une connexion chiffrée.
 
 ## L’utiliser depuis un autre appareil
 

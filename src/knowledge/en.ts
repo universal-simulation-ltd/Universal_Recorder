@@ -160,7 +160,7 @@ Browser storage is convenient, but it is not a backup. For anything that matters
 
 ## Who can reach it
 
-The cloud copy is kept in private storage and has no public link. It can only be reached by signing in, and only by members of the Universal ID organisation it was saved under. If you share that organisation with other people, such as a team, they can reach it too. It travels to and from storage over an encrypted connection.
+The cloud copy is kept in private storage and has no public link. Only you can reach it, by signing in with the Universal ID you saved it with. If your Universal ID belongs to a company with other people in it, each cloud recording has a **Share with** tick box in the **In the cloud** panel. It starts unticked. Tick it and everyone in your company can play and download that recording, but only you can delete it. Untick it to make the recording private again. It travels to and from storage over an encrypted connection.
 
 ## Using it from another device
 

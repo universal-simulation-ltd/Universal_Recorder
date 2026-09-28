@@ -31,9 +31,10 @@ Images / QR / Signatures). Served at `opensource.unisim.co.uk/recorder`.
   *On this device*. A guest is invited to create a free Universal ID; a signed-in
   user can push any on-device recording to the shared `hosted-uploads` bucket for
   one reusable **Recorder** token, then play it back, download it, or delete it —
-  deleting returns the token. Backend: `@unisim/sdk` hosted helpers +
+  deleting returns the token. Private to the saver unless they tick **Share with
+  <company>** on it (only offered in a workspace with other people). Backend: `@unisim/sdk` hosted helpers +
   `hosted_consume_and_record` / `hosted_refund_and_delete` (universal-platform
-  migrations 0041, 0045, 0095). Cloud saves are capped at **50 MB** per file
+  migrations 0041, 0045, 0095, 0194). Cloud saves are capped at **50 MB** per file
   (the bucket limit, and the Supabase Free-plan project ceiling) — hours of
   Opus audio, but only a couple of minutes of screen video, so long captures
   stay download-only.
@@ -64,3 +65,11 @@ Universal ID, uploads that recording's blob to the private `hosted-uploads`
 bucket. Nothing else — no preview, no screen still, no webcam frame, no
 telemetry about the audio — leaves the browser. Deleting the cloud copy removes
 the object and returns the token.
+
+A cloud copy is **private to the person who saved it** (universal-platform
+migration 0194, 2026-09-28). When the saver's workspace has other people in it,
+each of their cloud recordings shows a **Share with <company>** tick box,
+unticked by default; ticking it lets everyone in that workspace play and
+download the recording (never delete it), and unticking makes it private again.
+The rule is enforced in the database — on the `hosted_uploads` row and on the
+storage object — not just in the panel.

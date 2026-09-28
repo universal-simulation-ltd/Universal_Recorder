@@ -160,7 +160,7 @@ Der Browserspeicher ist praktisch, aber keine Sicherung. Laden Sie alles, was Ih
 
 ## Wer darauf zugreifen kann
 
-Die Cloud-Kopie liegt in einem privaten Speicher und hat keinen öffentlichen Link. Sie ist nur nach einer Anmeldung erreichbar, und nur für Mitglieder der Universal-ID-Organisation, unter der sie gespeichert wurde. Teilen Sie diese Organisation mit anderen, etwa einem Team, können auch diese darauf zugreifen. Die Übertragung zum Speicher und zurück erfolgt über eine verschlüsselte Verbindung.
+Die Cloud-Kopie liegt in einem privaten Speicher und hat keinen öffentlichen Link. Nur Sie können darauf zugreifen, wenn Sie sich mit der Universal ID anmelden, mit der Sie sie gespeichert haben. Gehört Ihre Universal ID zu einem Unternehmen mit weiteren Personen, hat jede Cloud-Aufnahme im Bereich **In the cloud** ein Kästchen **Share with**. Es ist anfangs nicht angehakt. Haken Sie es an, kann jede Person in Ihrem Unternehmen die Aufnahme abspielen und herunterladen, löschen können aber nur Sie. Entfernen Sie den Haken, ist die Aufnahme wieder privat. Die Übertragung zum Speicher und zurück erfolgt über eine verschlüsselte Verbindung.
 
 ## Von einem anderen Gerät aus nutzen
 

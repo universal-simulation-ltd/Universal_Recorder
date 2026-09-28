@@ -160,7 +160,7 @@ O armazenamento do browser é prático, mas não é uma cópia de segurança. Pa
 
 ## Quem lhe pode aceder
 
-A cópia na nuvem fica num armazenamento privado e não tem ligação pública. Só pode ser acedida com sessão iniciada, e apenas por membros da organização Universal ID em que foi guardada. Se partilhar essa organização com outras pessoas, como uma equipa, também elas lhe podem aceder. Circula de e para o armazenamento através de uma ligação cifrada.
+A cópia na nuvem fica num armazenamento privado e não tem ligação pública. Só você lhe pode aceder, iniciando sessão com o Universal ID em que a guardou. Se o seu Universal ID pertencer a uma empresa com outras pessoas, cada gravação na nuvem tem uma caixa **Share with** no painel **In the cloud**. Começa desmarcada. Marque-a e todas as pessoas da sua empresa poderão reproduzir e transferir essa gravação, mas só você a poderá eliminar. Desmarque-a para que volte a ser privada. Circula de e para o armazenamento através de uma ligação cifrada.
 
 ## Usar noutro dispositivo
 

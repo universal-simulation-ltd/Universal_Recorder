@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   useAppFreeToken,
   useCredits,
-  useHostedUploads,
+  useOrg,
+  useOrgMembers,
   useUniversal,
   useUser,
   type HostedUpload,
@@ -11,6 +12,7 @@ import {
   MAX_CLOUD_BYTES,
   PRODUCT,
   deleteHostedRecording,
+  setRecordingShared,
   storeRecording,
 } from './hostedRecordings'
 import { safeStem } from './hostedPaths'
@@ -24,6 +26,10 @@ import type { StoredRecording } from './types'
 // A guest has no Universal ID, so there is nothing to charge and nowhere to put
 // the file — asking to save opens the sign-up dialog instead of erroring.
 
+/** A cloud recording row, plus the per-recording share flag (migration 0194).
+ *  Private to the person who saved it unless `shared_with_org`. */
+export type CloudUpload = HostedUpload & { shared_with_org: boolean }
+
 export interface Cloud {
   /** A real (non-anonymous) Universal ID session is present. */
   signedIn: boolean
@@ -34,8 +40,18 @@ export interface Cloud {
   freeToken: 'available' | 'held' | 'spent' | null
   /** A token is available from either pool. */
   canSave: boolean
-  uploads: HostedUpload[]
+  /** Your own cloud recordings, plus any a colleague has shared with the
+   *  company (RLS, migration 0194, decides which rows come back). */
+  uploads: CloudUpload[]
   loading: boolean
+  /** The signed-in user's id — a row with another user_id is a colleague's
+   *  shared recording: playable, never deletable or re-shareable. */
+  myUserId: string | null
+  /** The workspace has other people in it, so "Share with your company"
+   *  means something. A one-person workspace never sees the option. */
+  inCompany: boolean
+  /** The company's name, for the share toggle's label. */
+  companyName: string | null
   /** The recording id currently uploading, the upload id currently being
    *  removed, or null. */
   busyId: string | null
@@ -57,6 +73,47 @@ export interface Cloud {
   save: (rec: StoredRecording) => Promise<void>
   /** Delete a cloud recording and get the token back. */
   remove: (upload: HostedUpload) => Promise<void>
+  /** Share one of your own recordings with your company, or stop sharing. */
+  setShared: (upload: CloudUpload, shared: boolean) => Promise<void>
+}
+
+// The list is read here rather than through the SDK's `useHostedUploads`,
+// because that hook's column list predates `shared_with_org` (0194).
+const UPLOAD_COLUMNS =
+  'id, org_id, user_id, product, storage_path, file_name, size_bytes, created_at, shared_with_org'
+
+function useRecorderUploads(orgId: string | null | undefined, signedIn: boolean) {
+  const { supabase } = useUniversal()
+  const [uploads, setUploads] = useState<CloudUpload[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!orgId || !signedIn) {
+      setUploads([])
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    supabase
+      .from('hosted_uploads')
+      .select(UPLOAD_COLUMNS)
+      .eq('org_id', orgId)
+      .eq('product', PRODUCT)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return
+        setUploads(error ? [] : ((data ?? []) as CloudUpload[]))
+        setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, orgId, signedIn, tick])
+
+  const refresh = useCallback(() => setTick(t => t + 1), [])
+  return { uploads, loading, refresh }
 }
 
 // Matching a cloud row back to the on-device recording it came from uses the
@@ -69,7 +126,8 @@ export function useCloud(): Cloud {
   const { user } = useUser()
   const { credits, refresh: refreshCredits } = useCredits()
   const { status: freeToken, refresh: refreshFreeToken } = useAppFreeToken(PRODUCT)
-  const { uploads, loading, refresh: refreshList } = useHostedUploads(PRODUCT)
+  const { org } = useOrg()
+  const { members } = useOrgMembers()
 
   const [busyId, setBusyId] = useState<string | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
@@ -77,6 +135,9 @@ export function useCloud(): Cloud {
   const [signInOpen, setSignInOpen] = useState(false)
 
   const signedIn = !!session?.user && session.user.is_anonymous !== true
+  const myUserId = session?.user?.id ?? null
+  const { uploads, loading, refresh: refreshList } = useRecorderUploads(activeOrgId, signedIn)
+  const inCompany = members.length > 1
   const tokens = credits ?? 0
   const canSave = freeToken === 'available' || tokens > 0
 
@@ -85,9 +146,13 @@ export function useCloud(): Cloud {
   const isStored = useCallback(
     (rec: StoredRecording) => {
       const stem = safeStem(rec.name)
-      return uploads.some(u => (u.file_name ?? '').replace(/\.[^.]+$/, '') === stem)
+      // Only your own cloud copies: a colleague's shared recording that happens
+      // to carry the same name is not a copy of yours.
+      return uploads.some(
+        u => u.user_id === myUserId && (u.file_name ?? '').replace(/\.[^.]+$/, '') === stem,
+      )
     },
-    [uploads],
+    [uploads, myUserId],
   )
 
   const tooBig = useCallback((rec: StoredRecording) => rec.blob.size > MAX_CLOUD_BYTES, [])
@@ -150,6 +215,22 @@ export function useCloud(): Cloud {
     [busyId, supabase, refreshCredits, refreshFreeToken, refreshList],
   )
 
+  const setShared = useCallback(
+    async (upload: CloudUpload, shared: boolean) => {
+      if (busyId) return
+      setError(null)
+      setBusyId(upload.id)
+      try {
+        const res = await setRecordingShared(supabase, upload.id, shared)
+        if (!res.ok) setError(res.error ?? 'Could not change who can see this recording.')
+        refreshList()
+      } finally {
+        setBusyId(null)
+      }
+    },
+    [busyId, supabase, refreshList],
+  )
+
   return {
     signedIn,
     email: user?.email,
@@ -158,6 +239,9 @@ export function useCloud(): Cloud {
     canSave,
     uploads,
     loading,
+    myUserId,
+    inCompany,
+    companyName: org?.name ?? null,
     busyId,
     busy: busyId !== null,
     savedId,
@@ -169,5 +253,6 @@ export function useCloud(): Cloud {
     isStored,
     save,
     remove,
+    setShared,
   }
 }

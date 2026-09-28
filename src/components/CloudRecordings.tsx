@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { SignInDialog, useUniversal, type HostedUpload } from '@unisim/sdk'
 import RecordingPlayer from './RecordingPlayer'
 import { HostedObjectMissingError, downloadHostedRecording, fmtBytes, hostedRecordingUrl } from '../lib/hostedRecordings'
-import type { Cloud } from '../lib/useCloud'
+import type { Cloud, CloudUpload } from '../lib/useCloud'
 
 const HUB_LOGIN_URL = 'https://app.unisim.co.uk/login'
 // Was /subscription.html until 2026-09-07, when the marketing site split its
@@ -155,6 +155,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Saved online against <strong className="font-medium text-slate-700 dark:text-slate-200">{cloud.email}</strong>.
               One token per recording — delete the cloud copy and your token comes straight back.
+              Only you can see your cloud recordings{cloud.inCompany ? ' unless you share one with your company' : ''}.
             </p>
 
             {cloud.loading ? (
@@ -166,7 +167,9 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
               </p>
             ) : (
               <ul className="mt-3 space-y-2">
-                {cloud.uploads.map(u => (
+                {cloud.uploads.map(u => {
+                  const mine = u.user_id === cloud.myUserId
+                  return (
                   <li key={u.id} className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-950">
                     <div className="flex items-center gap-2">
                       <span className="min-w-0 flex-1">
@@ -176,6 +179,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                         <span className="block text-[10px] text-slate-400">
                           {new Date(u.created_at).toLocaleDateString()}
                           {u.size_bytes > 0 && ` · ${fmtBytes(u.size_bytes)}`}
+                          {!mine && ' · Shared by a colleague'}
                         </span>
                       </span>
                       <button
@@ -192,15 +196,23 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                       >
                         ⬇
                       </button>
-                      <button
-                        onClick={() => void onRemove(u)}
-                        disabled={cloud.busy}
-                        title="Delete the cloud copy and refund the token"
-                        className="shrink-0 rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
-                      >
-                        {cloud.busyId === u.id ? 'Deleting…' : 'Delete'}
-                      </button>
+                      {mine && (
+                        <button
+                          onClick={() => void onRemove(u)}
+                          disabled={cloud.busy}
+                          title="Delete the cloud copy and refund the token"
+                          className="shrink-0 rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
+                        >
+                          {cloud.busyId === u.id ? 'Deleting…' : 'Delete'}
+                        </button>
+                      )}
                     </div>
+                    {/* Private by default (0194). The option only appears in a
+                        workspace with other people in it — or on a recording
+                        that is already shared, so it can always be stopped. */}
+                    {mine && (cloud.inCompany || u.shared_with_org) && (
+                      <ShareToggle upload={u} cloud={cloud} />
+                    )}
                     {/* A cloud recording with nothing behind it. Say which one,
                         say plainly that the upload never finished, and make
                         clearing it up one click — the token comes back with it,
@@ -218,14 +230,16 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                           but there is no file behind it — this upload never finished, so nothing was ever
                           saved. Your token is still being held for it.
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => void onRemove(u)}
-                          disabled={cloud.busy}
-                          className="mt-2 inline-flex rounded-md bg-amber-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
-                        >
-                          Remove this entry and get the token back
-                        </button>
+                        {mine && (
+                          <button
+                            type="button"
+                            onClick={() => void onRemove(u)}
+                            disabled={cloud.busy}
+                            className="mt-2 inline-flex rounded-md bg-amber-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
+                          >
+                            Remove this entry and get the token back
+                          </button>
+                        )}
                       </div>
                     )}
                     {playing?.id === u.id && (
@@ -238,7 +252,8 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                       />
                     )}
                   </li>
-                ))}
+                  )
+                })}
               </ul>
             )}
 
@@ -282,5 +297,34 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
         initialMode="signup"
       />
     </section>
+  )
+}
+
+/** "Share with <company>" on one of your own cloud recordings. Unticked by
+ *  default: a cloud recording is private to the person who saved it. */
+function ShareToggle({ upload, cloud }: { upload: CloudUpload; cloud: Cloud }) {
+  const company = cloud.companyName || 'your company'
+  return (
+    <label
+      className="mt-1.5 flex cursor-pointer items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400"
+      title={
+        upload.shared_with_org
+          ? `Everyone in ${company} can play and download this recording. Untick to make it private again.`
+          : `Only you can see this recording. Tick to let everyone in ${company} play and download it.`
+      }
+    >
+      <input
+        type="checkbox"
+        data-testid="share-with-company"
+        checked={upload.shared_with_org}
+        disabled={cloud.busy}
+        onChange={e => void cloud.setShared(upload, e.target.checked)}
+        className="h-3.5 w-3.5 accent-orange-700"
+      />
+      <span>
+        Share with {company}
+        {cloud.busyId === upload.id && ' …'}
+      </span>
+    </label>
   )
 }
