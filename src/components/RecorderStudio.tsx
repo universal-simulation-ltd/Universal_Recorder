@@ -99,6 +99,21 @@ function loadCountdownPrefs(): CountdownPrefs {
   }
 }
 
+// James, 2026-09-30: every Tune this app has a Reset to defaults. Recorder's own
+// part is the two device-local prefs above — the webcam overlay layout and the
+// countdown. App.tsx calls this from the navbar's onResetDefaults; it clears the
+// keys, then tells a mounted studio to put its live controls back too (the
+// studio owns that state, so an event is simpler than lifting it all to App).
+// Recordings in IndexedDB are the user's documents, never touched here.
+const RESET_PREFS_EVENT = 'universal-recorder:reset-prefs'
+export function resetRecorderPrefs(): void {
+  try {
+    localStorage.removeItem(OVERLAY_PREFS_KEY)
+    localStorage.removeItem(COUNTDOWN_PREFS_KEY)
+  } catch { /* storage disabled — nothing was persisted */ }
+  window.dispatchEvent(new Event(RESET_PREFS_EVENT))
+}
+
 const AUDIO_FORMATS: ExportFormat[] = ['webm', 'mp3', 'wav']
 
 // The real container extension of a recording (video is MP4 where the browser
@@ -260,7 +275,11 @@ function SaveToCloudButton({
   )
 }
 
-export default function RecorderStudio() {
+export default function RecorderStudio({ onBusyChange }: {
+  /** True while a recording is starting, counting down, running or paused —
+      App withholds its Reset to defaults then, as Compress/Converter do. */
+  onBusyChange?: (busy: boolean) => void
+} = {}) {
   const [isMobile] = useState(isMobileBrowser)
   const [canSystemAudio] = useState(systemAudioSupported)
   const [canScreen] = useState(screenSupported)
@@ -414,6 +433,25 @@ export default function RecorderStudio() {
       localStorage.setItem(COUNTDOWN_PREFS_KEY, JSON.stringify({ enabled: countdownEnabled, seconds: countdownSeconds }))
     } catch { /* storage disabled — the choice just won't persist */ }
   }, [countdownEnabled, countdownSeconds])
+
+  // Reset to defaults (see resetRecorderPrefs): the keys are already gone, so put
+  // the live controls back to the defaults. Re-baseline the countdown's
+  // "at load" values first, so the persist effect above doesn't read the reset
+  // as a choice and write the default straight back as a stored preference.
+  useEffect(() => {
+    const onReset = () => {
+      countdownPrefsAtLoad.current = DEFAULT_COUNTDOWN_PREFS
+      setCountdownEnabled(DEFAULT_COUNTDOWN_PREFS.enabled)
+      setCountdownSeconds(DEFAULT_COUNTDOWN_PREFS.seconds)
+      setPipPosition(DEFAULT_OVERLAY_PREFS.position)
+      setPipSize(DEFAULT_OVERLAY_PREFS.size)
+      setPipShape(DEFAULT_OVERLAY_PREFS.shape)
+      setPipX(DEFAULT_OVERLAY_PREFS.x)
+      setPipY(DEFAULT_OVERLAY_PREFS.y)
+    }
+    window.addEventListener(RESET_PREFS_EVENT, onReset)
+    return () => window.removeEventListener(RESET_PREFS_EVENT, onReset)
+  }, [])
 
   // Nothing turns on until the user presses Preview. Whenever the selected
   // sources (or the chosen camera) change, drop any live preview and re-arm the
@@ -688,6 +726,10 @@ export default function RecorderStudio() {
   const recording = status === 'recording'
   const paused = status === 'paused'
   const live = recording || paused
+  // Tell App when a take is under way, so Reset to defaults can't move the
+  // webcam overlay mid-recording (the compositor would pick it up live).
+  const busy = live || starting || countdownLeft !== null
+  useEffect(() => { onBusyChange?.(busy) }, [busy, onBusyChange])
   const needsMic = sources.includes('mic')
   const usesDisplay = sources.includes('system') || sources.includes('screen')
   const usesWebcam = sources.includes('webcam')
