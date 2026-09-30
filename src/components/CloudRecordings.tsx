@@ -3,6 +3,7 @@ import { SignInDialog, useUniversal, type HostedUpload } from '@unisim/sdk'
 import RecordingPlayer from './RecordingPlayer'
 import { HostedObjectMissingError, downloadHostedRecording, fmtBytes, hostedRecordingUrl } from '../lib/hostedRecordings'
 import type { Cloud, CloudUpload } from '../lib/useCloud'
+import { toMB } from '../lib/useFreeAllowance'
 
 const HUB_LOGIN_URL = 'https://app.unisim.co.uk/login'
 // Was /subscription.html until 2026-09-07, when the marketing site split its
@@ -58,6 +59,19 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
   // A signed-out user has nothing in the cloud, so the count is only meaningful
   // once signed in.
   const count = cloud.signedIn ? cloud.uploads.length : 0
+
+  // A quiet heads-up once the shared free pool is 80% full — but only while
+  // there is still room; at the limit the amber "used your free storage"
+  // notice below takes over. Never for guests or unlimited plans.
+  const a = cloud.allowance
+  const nearFreeLimit =
+    cloud.signedIn &&
+    !!a &&
+    !a.unlimited &&
+    a.has_room &&
+    !!a.bytes_limit &&
+    a.bytes_limit > 0 &&
+    a.bytes_used / a.bytes_limit >= 0.8
 
   async function onPlay(upload: HostedUpload) {
     if (loadingId) return
@@ -252,6 +266,13 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                   )
                 })}
               </ul>
+            )}
+
+            {nearFreeLimit && cloud.allowance && (
+              <p className="mt-3 text-xs text-slate-500 dark:text-slate-400" data-testid="free-allowance-usage">
+                You’ve used {toMB(cloud.allowance.bytes_used)} MB of your {toMB(cloud.allowance.bytes_limit ?? 0)} MB
+                of free online storage. It’s shared by Universal PDF, Images, Exports and Recorder.
+              </p>
             )}
 
             {!cloud.canSave && cloud.freeToken !== null && (

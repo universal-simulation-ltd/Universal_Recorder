@@ -16,6 +16,7 @@ import {
   storeRecording,
 } from './hostedRecordings'
 import { safeStem } from './hostedPaths'
+import { useFreeAllowance, type FreeAllowanceStatus } from './useFreeAllowance'
 import type { StoredRecording } from './types'
 
 // All the "save to cloud" state in one place, so the Save-to-cloud button on each
@@ -40,6 +41,9 @@ export interface Cloud {
   freeToken: 'available' | 'held' | 'spent' | null
   /** A token is available from either pool. */
   canSave: boolean
+  /** The shared free "files" pool's usage (0199), or null when unknown.
+   *  Informational only — `canSave` still decides. */
+  allowance: FreeAllowanceStatus | null
   /** Your own cloud recordings, plus any a colleague has shared with the
    *  company (RLS, migration 0194, decides which rows come back). */
   uploads: CloudUpload[]
@@ -126,6 +130,7 @@ export function useCloud(): Cloud {
   const { user } = useUser()
   const { credits, refresh: refreshCredits } = useCredits()
   const { status: freeToken, refresh: refreshFreeToken } = useAppFreeToken(PRODUCT)
+  const { status: allowance, refresh: refreshAllowance } = useFreeAllowance(PRODUCT)
   const { org } = useOrg()
   const { members } = useOrgMembers()
 
@@ -186,13 +191,14 @@ export function useCloud(): Cloud {
           window.setTimeout(() => setSavedId(null), 2400)
           refreshCredits()
           refreshFreeToken()
+          refreshAllowance()
           refreshList()
         }
       } finally {
         setBusyId(null)
       }
     },
-    [signedIn, activeOrgId, busyId, supabase, freeToken, refreshCredits, refreshFreeToken, refreshList],
+    [signedIn, activeOrgId, busyId, supabase, freeToken, refreshCredits, refreshFreeToken, refreshAllowance, refreshList],
   )
 
   const remove = useCallback(
@@ -206,13 +212,14 @@ export function useCloud(): Cloud {
         else {
           refreshCredits()
           refreshFreeToken()
+          refreshAllowance()
           refreshList()
         }
       } finally {
         setBusyId(null)
       }
     },
-    [busyId, supabase, refreshCredits, refreshFreeToken, refreshList],
+    [busyId, supabase, refreshCredits, refreshFreeToken, refreshAllowance, refreshList],
   )
 
   const setShared = useCallback(
@@ -237,6 +244,7 @@ export function useCloud(): Cloud {
     tokens,
     freeToken,
     canSave,
+    allowance,
     uploads,
     loading,
     myUserId,
