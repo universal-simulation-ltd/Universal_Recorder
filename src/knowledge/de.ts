@@ -153,10 +153,9 @@ Der Browserspeicher ist praktisch, aber keine Sicherung. Laden Sie alles, was Ih
 ## So funktioniert es
 
 - Sie müssen mit einer Universal ID angemeldet sein. Die Erstellung ist kostenlos.
-- Jede in der Cloud gespeicherte Aufnahme verbraucht ein Token. Zu Ihrer Universal ID gehört ein kostenloses Recorder-Token, weitere können gekauft werden.
-- Wenn Sie die Cloud-Kopie löschen, erhalten Sie das Token zurück.
-- Jede Speicherung in der Cloud ist auf 50 MB begrenzt. Das sind Stunden an Audio, aber nur wenige Minuten Bildschirmvideo. Lange Videoaufnahmen können daher nur heruntergeladen werden. Die Größe wird geprüft, bevor ein Token verbraucht wird.
-- Schlägt ein Upload fehl, wird das Token automatisch zurückgegeben.
+- Aufnahmen in der Cloud zu speichern ist mit einer Universal ID kostenlos. Kostenlose Konten haben ein großzügiges Limit – sollten Sie es einmal erreichen, löschen Sie eine Cloud-Aufnahme, die Sie nicht mehr brauchen, oder holen Sie sich mehr.
+- Jede Speicherung in der Cloud ist auf 50 MB begrenzt. Das sind Stunden an Audio, aber nur wenige Minuten Bildschirmvideo. Lange Videoaufnahmen können daher nur heruntergeladen werden. Die Größe wird geprüft, bevor der Upload beginnt.
+- Schlägt ein Upload fehl, wird er nicht auf Ihr Limit angerechnet.
 
 ## Wer darauf zugreifen kann
 

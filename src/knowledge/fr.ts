@@ -153,10 +153,9 @@ Le stockage du navigateur est pratique, mais ce n’est pas une sauvegarde. Pour
 ## Comment cela fonctionne
 
 - Vous devez être connecté avec un Universal ID. La création d’un compte est gratuite.
-- Chaque enregistrement conservé dans le cloud utilise un jeton. Votre Universal ID comprend un jeton Recorder gratuit, et vous pouvez en acheter d’autres.
-- Supprimer la copie dans le cloud vous rend le jeton.
-- Chaque enregistrement dans le cloud est limité à 50 Mo. Cela représente des heures d’audio, mais seulement quelques minutes de vidéo d’écran : les longs enregistrements vidéo restent donc à télécharger uniquement. La taille est vérifiée avant l’utilisation de tout jeton.
-- Si un envoi échoue, le jeton vous est rendu automatiquement.
+- Conserver vos enregistrements dans le cloud est gratuit avec un Universal ID. Les comptes gratuits disposent d’une limite généreuse : si vous l’atteignez un jour, supprimez un enregistrement dans le cloud dont vous n’avez plus besoin, ou obtenez plus d’espace.
+- Chaque enregistrement dans le cloud est limité à 50 Mo. Cela représente des heures d’audio, mais seulement quelques minutes de vidéo d’écran : les longs enregistrements vidéo restent donc à télécharger uniquement. La taille est vérifiée avant le début de l’envoi.
+- Si un envoi échoue, il n’est pas décompté de votre limite.
 
 ## Qui peut y accéder
 

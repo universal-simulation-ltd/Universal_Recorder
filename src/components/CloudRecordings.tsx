@@ -121,11 +121,10 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
             In the cloud{count > 0 ? ` (${count})` : ''}
           </button>
         </h2>
-        {cloud.signedIn && open && (
+        {/* No allowance talk while within it — only a purchased balance, if any. */}
+        {cloud.signedIn && open && cloud.tokens > 0 && (
           <span className="text-xs text-slate-400">
-            {cloud.freeToken === 'available'
-              ? `Free token${cloud.tokens > 0 ? ` + ${cloud.tokens} purchased` : ' available'}`
-              : `${cloud.tokens} token${cloud.tokens === 1 ? '' : 's'}`}
+            {`${cloud.tokens} purchased token${cloud.tokens === 1 ? '' : 's'}`}
           </span>
         )}
       </div>
@@ -135,12 +134,11 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
           /* Guest — the whole point of opening this panel. */
           <div className="rounded-xl border border-orange-200 bg-white p-4 dark:border-orange-900/60 dark:bg-slate-900">
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              Create a Universal ID to save a recording to cloud
+              Create a Universal ID to save recordings to the cloud for FREE.
             </p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Your recordings live in this browser only. A free Universal ID lets you keep one
-              recording online — reach it from any device, and get your token straight back when
-              you delete it.
+              Your recordings live in this browser only. With a Universal ID you can keep them
+              online too, and reach them from any device.
             </p>
             <button
               type="button"
@@ -154,7 +152,6 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
           <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Saved online against <strong className="font-medium text-slate-700 dark:text-slate-200">{cloud.email}</strong>.
-              One token per recording — delete the cloud copy and your token comes straight back.
               Only you can see your cloud recordings{cloud.inCompany ? ' unless you share one with your company' : ''}.
             </p>
 
@@ -200,7 +197,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                         <button
                           onClick={() => void onRemove(u)}
                           disabled={cloud.busy}
-                          title="Delete the cloud copy and refund the token"
+                          title="Delete the cloud copy"
                           className="shrink-0 rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
                         >
                           {cloud.busyId === u.id ? 'Deleting…' : 'Delete'}
@@ -215,8 +212,8 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                     )}
                     {/* A cloud recording with nothing behind it. Say which one,
                         say plainly that the upload never finished, and make
-                        clearing it up one click — the token comes back with it,
-                        so there is nothing to lose by tidying. This replaces
+                        clearing it up one click — there is nothing to lose by
+                        tidying. This replaces
                         storage's bare "Object not found", which read like the
                         app had mislaid the user's recording. */}
                     {missingId === u.id && (
@@ -228,7 +225,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                         <p className="text-[11px] leading-snug text-amber-900 dark:text-amber-200">
                           <strong className="font-semibold">{u.file_name || 'This recording'}</strong> is listed here,
                           but there is no file behind it — this upload never finished, so nothing was ever
-                          saved. Your token is still being held for it.
+                          saved. Remove the entry to tidy it away.
                         </p>
                         {mine && (
                           <button
@@ -237,7 +234,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                             disabled={cloud.busy}
                             className="mt-2 inline-flex rounded-md bg-amber-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
                           >
-                            Remove this entry and get the token back
+                            Remove this entry
                           </button>
                         )}
                       </div>
@@ -261,8 +258,8 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
               <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/60 dark:bg-amber-950/40">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
                   {cloud.freeToken === 'held'
-                    ? 'Your free Recorder token is in use — delete the cloud recording above to get it back, or add tokens.'
-                    : 'You have no tokens left.'}
+                    ? 'You’ve used your free cloud storage for recordings. Delete a cloud recording to make room, or get more.'
+                    : 'You’ve used your free cloud storage for recordings. Get more to keep saving recordings to the cloud.'}
                 </p>
                 <a
                   href={GET_TOKENS_URL}
@@ -270,7 +267,7 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                   rel="noreferrer"
                   className="mt-2 inline-flex rounded-lg bg-orange-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-orange-800"
                 >
-                  Get tokens →
+                  Get more →
                 </a>
               </div>
             )}

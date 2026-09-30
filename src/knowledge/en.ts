@@ -153,10 +153,9 @@ Browser storage is convenient, but it is not a backup. For anything that matters
 ## How it works
 
 - You need to be signed in with a Universal ID. Creating one is free.
-- Each recording kept in the cloud uses one token. Your Universal ID comes with a free Recorder token, and more can be bought.
-- Deleting the cloud copy gives the token back.
-- Each cloud save is limited to 50 MB. That is hours of audio but only a few minutes of screen video, so long video recordings stay download-only. The size is checked before any token is used.
-- If an upload fails, the token is returned automatically.
+- Saving recordings to the cloud is free with a Universal ID. Free accounts have a generous limit — if you ever reach it, delete a cloud recording you no longer need, or get more.
+- Each cloud save is limited to 50 MB. That is hours of audio but only a few minutes of screen video, so long video recordings stay download-only. The size is checked before the upload starts.
+- If an upload fails, it does not count towards your limit.
 
 ## Who can reach it
 

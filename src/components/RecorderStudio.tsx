@@ -238,12 +238,12 @@ function SaveToCloudButton({
       disabled={saving || stored || (tooBig && cloud.signedIn)}
       title={
         !cloud.signedIn
-          ? 'Create a free Universal ID to save this recording to the cloud'
+          ? 'Create a Universal ID to save recordings to the cloud for FREE.'
           : stored
             ? 'Already saved to the cloud'
             : tooBig
               ? `Too large for a cloud save (${fmtBytes(rec.blob.size)} — the limit is ${fmtBytes(MAX_CLOUD_BYTES)}). Download it instead.`
-              : 'Save to the cloud against your Universal ID — uses this app’s token'
+              : 'Save to the cloud against your Universal ID'
       }
       className={[
         cls,

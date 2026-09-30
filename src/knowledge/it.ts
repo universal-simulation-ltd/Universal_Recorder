@@ -153,10 +153,9 @@ Lo spazio del browser è comodo, ma non è un backup. Per tutto ciò che conta, 
 ## Come funziona
 
 - Devi aver effettuato l’accesso con un Universal ID. Crearne uno è gratuito.
-- Ogni registrazione tenuta nel cloud usa un token. Il tuo Universal ID include un token Recorder gratuito, e se ne possono acquistare altri.
-- Eliminare la copia nel cloud ti restituisce il token.
-- Ogni salvataggio nel cloud è limitato a 50 MB. Sono ore di audio ma solo pochi minuti di video dello schermo, quindi le registrazioni video lunghe restano solo da scaricare. La dimensione viene controllata prima di usare qualsiasi token.
-- Se un caricamento non va a buon fine, il token viene restituito automaticamente.
+- Salvare le registrazioni nel cloud è gratuito con un Universal ID. Gli account gratuiti hanno un limite generoso: se mai lo raggiungi, elimina una registrazione nel cloud che non ti serve più, oppure ottieni più spazio.
+- Ogni salvataggio nel cloud è limitato a 50 MB. Sono ore di audio ma solo pochi minuti di video dello schermo, quindi le registrazioni video lunghe restano solo da scaricare. La dimensione viene controllata prima che inizi il caricamento.
+- Se un caricamento non va a buon fine, non viene conteggiato nel tuo limite.
 
 ## Chi può accedervi
 

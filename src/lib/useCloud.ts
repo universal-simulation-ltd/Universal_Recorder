@@ -175,10 +175,10 @@ export function useCloud(): Cloud {
         const res = await storeRecording(supabase, activeOrgId, rec)
         if (!res.ok) {
           setError(
-            res.error === 'no_credits'
-              ? freeToken === 'held'
-                ? 'Your free Recorder token is in use — delete the recording already in the cloud to get it back, or add tokens.'
-                : 'You have no tokens left. Get more to keep saving recordings to the cloud.'
+            res.error === 'no_credits' || res.error === 'token_in_use'
+              ? freeToken === 'held' || res.error === 'token_in_use'
+                ? 'You’ve used your free cloud storage for recordings. Delete a cloud recording to make room, or get more.'
+                : 'You’ve used your free cloud storage for recordings. Get more to keep saving recordings to the cloud.'
               : res.error ?? 'Could not save this recording to the cloud.',
           )
         } else {

@@ -153,10 +153,9 @@ Tarayıcı depolaması kullanışlıdır ama bir yedek değildir. Önemli olan h
 ## Nasıl çalışır
 
 - Universal ID ile oturum açmış olmanız gerekir. Oluşturmak ücretsizdir.
-- Bulutta tutulan her kayıt bir jeton kullanır. Universal ID’niz ücretsiz bir Recorder jetonuyla birlikte gelir; daha fazlası satın alınabilir.
-- Buluttaki kopyayı silmek jetonu geri verir.
-- Her bulut kaydı 50 MB ile sınırlıdır. Bu, saatlerce ses ama yalnızca birkaç dakikalık ekran videosu demektir; bu yüzden uzun video kayıtları yalnızca indirilebilir. Boyut, herhangi bir jeton kullanılmadan önce kontrol edilir.
-- Bir yükleme başarısız olursa jeton otomatik olarak iade edilir.
+- Kayıtları buluta kaydetmek Universal ID ile ücretsizdir. Ücretsiz hesapların cömert bir sınırı vardır; bir gün bu sınıra ulaşırsanız artık ihtiyacınız olmayan bir bulut kaydını silin ya da daha fazlasını edinin.
+- Her bulut kaydı 50 MB ile sınırlıdır. Bu, saatlerce ses ama yalnızca birkaç dakikalık ekran videosu demektir; bu yüzden uzun video kayıtları yalnızca indirilebilir. Boyut, yükleme başlamadan önce kontrol edilir.
+- Bir yükleme başarısız olursa sınırınızdan sayılmaz.
 
 ## Kimler erişebilir
 

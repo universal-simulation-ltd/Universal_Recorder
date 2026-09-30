@@ -84,7 +84,7 @@ export async function storeRecording(
     sizeBytes: rec.blob.size,
   })
   if (!consumed.ok || !consumed.upload_id) {
-    return { ok: false, error: consumed.error ?? 'Could not reserve a token.' }
+    return { ok: false, error: consumed.error ?? 'Could not save this recording to the cloud.' }
   }
 
   const { error: upErr } = await supabase.storage
@@ -136,7 +136,7 @@ export async function deleteHostedRecording(
 ): Promise<StoreResult> {
   await supabase.storage.from(HOSTED_BUCKET).remove(hostedRecordingPathCandidates(upload))
   const res = await refundHostedUpload(supabase, upload.id)
-  if (!res.ok) return { ok: false, error: res.error ?? 'Could not refund the token.' }
+  if (!res.ok) return { ok: false, error: res.error ?? 'Could not delete this cloud recording.' }
   return { ok: true, creditsRemaining: res.credits }
 }
 

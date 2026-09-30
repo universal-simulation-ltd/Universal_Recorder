@@ -153,10 +153,9 @@ El almacenamiento del navegador es cómodo, pero no es una copia de seguridad. P
 ## Cómo funciona
 
 - Tiene que haber iniciado sesión con un Universal ID. Crearlo es gratis.
-- Cada grabación guardada en la nube usa un token. Su Universal ID incluye un token gratuito de Recorder, y se pueden comprar más.
-- Al eliminar la copia en la nube, recupera el token.
-- Cada guardado en la nube está limitado a 50 MB. Eso son horas de audio, pero solo unos minutos de vídeo de pantalla, así que las grabaciones de vídeo largas solo se pueden descargar. El tamaño se comprueba antes de usar ningún token.
-- Si una subida falla, el token se devuelve automáticamente.
+- Guardar grabaciones en la nube es gratis con un Universal ID. Las cuentas gratuitas tienen un límite generoso: si alguna vez lo alcanza, elimine una grabación de la nube que ya no necesite u obtenga más espacio.
+- Cada guardado en la nube está limitado a 50 MB. Eso son horas de audio, pero solo unos minutos de vídeo de pantalla, así que las grabaciones de vídeo largas solo se pueden descargar. El tamaño se comprueba antes de que empiece la subida.
+- Si una subida falla, no cuenta para su límite.
 
 ## Quién puede acceder
 
