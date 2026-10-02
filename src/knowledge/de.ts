@@ -153,7 +153,7 @@ Der Browserspeicher ist praktisch, aber keine Sicherung. Laden Sie alles, was Ih
 ## So funktioniert es
 
 - Sie müssen mit einer Universal ID angemeldet sein. Die Erstellung ist kostenlos.
-- Aufnahmen in der Cloud zu speichern ist mit einer Universal ID kostenlos. Kostenlose Konten haben ein großzügiges Limit – sollten Sie es einmal erreichen, löschen Sie eine Cloud-Aufnahme, die Sie nicht mehr brauchen, oder holen Sie sich mehr.
+- Aufnahmen in der Cloud zu speichern ist mit einer Universal ID kostenlos. Kostenlose Konten haben ein großzügiges Limit – sollten Sie es einmal erreichen, löschen Sie eine Cloud-Aufnahme, die Sie nicht mehr brauchen. Wenn Sie mehr brauchen, sagen Sie es uns unter unisim.co.uk/support.
 - Jede Speicherung in der Cloud ist auf 50 MB begrenzt. Das sind Stunden an Audio, aber nur wenige Minuten Bildschirmvideo. Lange Videoaufnahmen können daher nur heruntergeladen werden. Die Größe wird geprüft, bevor der Upload beginnt.
 - Schlägt ein Upload fehl, wird er nicht auf Ihr Limit angerechnet.
 

@@ -153,7 +153,7 @@ Tarayıcı depolaması kullanışlıdır ama bir yedek değildir. Önemli olan h
 ## Nasıl çalışır
 
 - Universal ID ile oturum açmış olmanız gerekir. Oluşturmak ücretsizdir.
-- Kayıtları buluta kaydetmek Universal ID ile ücretsizdir. Ücretsiz hesapların cömert bir sınırı vardır; bir gün bu sınıra ulaşırsanız artık ihtiyacınız olmayan bir bulut kaydını silin ya da daha fazlasını edinin.
+- Kayıtları buluta kaydetmek Universal ID ile ücretsizdir. Ücretsiz hesapların cömert bir sınırı vardır; bir gün bu sınıra ulaşırsanız artık ihtiyacınız olmayan bir bulut kaydını silin. Daha fazlasına ihtiyacınız olursa unisim.co.uk/support adresinden bize bildirin.
 - Her bulut kaydı 50 MB ile sınırlıdır. Bu, saatlerce ses ama yalnızca birkaç dakikalık ekran videosu demektir; bu yüzden uzun video kayıtları yalnızca indirilebilir. Boyut, yükleme başlamadan önce kontrol edilir.
 - Bir yükleme başarısız olursa sınırınızdan sayılmaz.
 

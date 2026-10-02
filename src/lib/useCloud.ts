@@ -206,8 +206,8 @@ export function useCloud(): Cloud {
           setError(
             res.error === 'no_credits' || res.error === 'token_in_use'
               ? freeToken === 'held' || res.error === 'token_in_use'
-                ? 'You’ve used your free cloud storage for recordings. Delete a cloud recording to make room, or get more.'
-                : 'You’ve used your free cloud storage for recordings. Get more to keep saving recordings to the cloud.'
+                ? 'You’ve used your free cloud storage for recordings. Delete a cloud recording to make room.'
+                : 'You’ve used your free cloud storage for recordings.'
               : res.error ?? 'Could not save this recording to the cloud.',
           )
         } else {

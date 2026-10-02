@@ -153,7 +153,7 @@ Lo spazio del browser è comodo, ma non è un backup. Per tutto ciò che conta, 
 ## Come funziona
 
 - Devi aver effettuato l’accesso con un Universal ID. Crearne uno è gratuito.
-- Salvare le registrazioni nel cloud è gratuito con un Universal ID. Gli account gratuiti hanno un limite generoso: se mai lo raggiungi, elimina una registrazione nel cloud che non ti serve più, oppure ottieni più spazio.
+- Salvare le registrazioni nel cloud è gratuito con un Universal ID. Gli account gratuiti hanno un limite generoso: se mai lo raggiungi, elimina una registrazione nel cloud che non ti serve più. Se ti serve di più, faccelo sapere su unisim.co.uk/support.
 - Ogni salvataggio nel cloud è limitato a 50 MB. Sono ore di audio ma solo pochi minuti di video dello schermo, quindi le registrazioni video lunghe restano solo da scaricare. La dimensione viene controllata prima che inizi il caricamento.
 - Se un caricamento non va a buon fine, non viene conteggiato nel tuo limite.
 

@@ -6,12 +6,11 @@ import type { Cloud, CloudUpload } from '../lib/useCloud'
 import { toMB } from '../lib/useFreeAllowance'
 
 const HUB_LOGIN_URL = 'https://app.unisim.co.uk/login'
-// Was /subscription.html until 2026-09-07, when the marketing site split its
-// one pricing page in two. The token card moved to /everyday; /subscription is
-// now the Assess Suite's seats and licences and sells no tokens at all — so a
-// link left pointing there sends someone who wants one upload to a £5,000/year
-// enterprise plan. Not a 404: it renders fine, which is why it needed finding.
-const GET_TOKENS_URL = 'https://www.unisim.co.uk/everyday'
+// Nothing is for sale for the everyday apps (2026-10-03): at the free limit the
+// note says how to make room, and one quiet link asks people who need more to
+// tell us — that is the signal for when a paid tier is worth building. It is a
+// support link, not a purchase link, so the phone apps show it too.
+const NEED_MORE_URL = 'https://www.unisim.co.uk/support'
 // Where a signed-in Universal ID with no company sets one up. Opened in a new
 // tab so nothing recorded in this one is lost.
 const SET_UP_COMPANY_URL = 'https://app.unisim.co.uk/branding'
@@ -289,16 +288,16 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
               <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/60 dark:bg-amber-950/40">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
                   {cloud.freeToken === 'held'
-                    ? 'You’ve used your free cloud storage for recordings. Delete a cloud recording to make room, or get more.'
-                    : 'You’ve used your free cloud storage for recordings. Get more to keep saving recordings to the cloud.'}
+                    ? 'You’ve used your free cloud storage for recordings. Delete a cloud recording to make room.'
+                    : 'You’ve used your free cloud storage for recordings.'}
                 </p>
                 <a
-                  href={GET_TOKENS_URL}
+                  href={NEED_MORE_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-flex rounded-lg bg-orange-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-orange-800"
+                  className="mt-1.5 inline-block text-xs text-amber-800 underline underline-offset-2 hover:text-amber-950 dark:text-amber-200 dark:hover:text-amber-50"
                 >
-                  Get more →
+                  Need more? Tell us
                 </a>
               </div>
             )}

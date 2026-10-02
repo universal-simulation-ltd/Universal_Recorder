@@ -153,7 +153,7 @@ O armazenamento do navegador é prático, mas não é um backup. Para tudo o que
 ## Como funciona
 
 - Você precisa ter entrado com um Universal ID. Criar um é grátis.
-- Salvar gravações na nuvem é grátis com um Universal ID. Contas gratuitas têm um limite generoso: se algum dia você chegar a ele, exclua uma gravação na nuvem de que não precisa mais ou obtenha mais espaço.
+- Salvar gravações na nuvem é grátis com um Universal ID. Contas gratuitas têm um limite generoso: se algum dia você chegar a ele, exclua uma gravação na nuvem de que não precisa mais. Se precisar de mais, fale com a gente em unisim.co.uk/support.
 - Cada gravação salva na nuvem pode ter no máximo 50 MB. Isso dá horas de áudio, mas só alguns minutos de vídeo de tela, então gravações de vídeo longas ficam apenas para download. O tamanho é conferido antes de o envio começar.
 - Se um envio falhar, ele não conta para o seu limite.
 
