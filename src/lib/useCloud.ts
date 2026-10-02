@@ -56,6 +56,13 @@ export interface Cloud {
   inCompany: boolean
   /** The company's name, for the share toggle's label. */
   companyName: string | null
+  /** Signed in, but the Universal ID belongs to no company — and cloud
+   *  recordings are kept with a company, so there is nowhere to save one.
+   *  Only a SUCCESSFUL empty read counts; a failed read is unknown. */
+  noCompany: boolean
+  /** Save to cloud was pressed while `noCompany` — show the set-up-a-company
+   *  notice even with the cloud panel shut. */
+  noCompanyPrompt: boolean
   /** The recording id currently uploading, the upload id currently being
    *  removed, or null. */
   busyId: string | null
@@ -131,22 +138,27 @@ export function useCloud(): Cloud {
   const { credits, refresh: refreshCredits } = useCredits()
   const { status: freeToken, refresh: refreshFreeToken } = useAppFreeToken(PRODUCT)
   const { status: allowance, refresh: refreshAllowance } = useFreeAllowance(PRODUCT)
-  const { org } = useOrg()
+  const { org, orgs, loading: orgsLoading, error: orgsError } = useOrg()
   const { members } = useOrgMembers()
 
   const [busyId, setBusyId] = useState<string | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [signInOpen, setSignInOpen] = useState(false)
+  const [noCompanyPrompt, setNoCompanyPrompt] = useState(false)
 
   const signedIn = !!session?.user && session.user.is_anonymous !== true
+  const noCompany = signedIn && !orgsLoading && !orgsError && orgs.length === 0
   const myUserId = session?.user?.id ?? null
   const { uploads, loading, refresh: refreshList } = useRecorderUploads(activeOrgId, signedIn)
   const inCompany = members.length > 1
   const tokens = credits ?? 0
   const canSave = freeToken === 'available' || tokens > 0
 
-  const clearError = useCallback(() => setError(null), [])
+  const clearError = useCallback(() => {
+    setError(null)
+    setNoCompanyPrompt(false)
+  }, [])
 
   const isStored = useCallback(
     (rec: StoredRecording) => {
@@ -170,8 +182,20 @@ export function useCloud(): Cloud {
         setSignInOpen(true)
         return
       }
+      // Signed in with no company: cloud recordings are kept with a company,
+      // so explain that and offer to set one up rather than failing.
+      if (noCompany) {
+        setNoCompanyPrompt(true)
+        return
+      }
+      // The company exists (or can't be confirmed either way) but isn't
+      // loaded yet — never the place to suggest creating another one.
       if (!activeOrgId) {
-        setError('Your Universal ID has no workspace yet — open app.unisim.co.uk once to finish setting it up.')
+        setError(
+          orgsError
+            ? 'Couldn’t load your company just now, so this recording can’t be saved to the cloud yet. Check your connection and try again.'
+            : 'Still loading your Universal ID — try again in a moment.',
+        )
         return
       }
       if (busyId) return
@@ -198,7 +222,7 @@ export function useCloud(): Cloud {
         setBusyId(null)
       }
     },
-    [signedIn, activeOrgId, busyId, supabase, freeToken, refreshCredits, refreshFreeToken, refreshAllowance, refreshList],
+    [signedIn, noCompany, orgsError, activeOrgId, busyId, supabase, freeToken, refreshCredits, refreshFreeToken, refreshAllowance, refreshList],
   )
 
   const remove = useCallback(
@@ -250,6 +274,8 @@ export function useCloud(): Cloud {
     myUserId,
     inCompany,
     companyName: org?.name ?? null,
+    noCompany,
+    noCompanyPrompt,
     busyId,
     busy: busyId !== null,
     savedId,

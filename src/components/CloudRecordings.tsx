@@ -12,6 +12,9 @@ const HUB_LOGIN_URL = 'https://app.unisim.co.uk/login'
 // link left pointing there sends someone who wants one upload to a £5,000/year
 // enterprise plan. Not a 404: it renders fine, which is why it needed finding.
 const GET_TOKENS_URL = 'https://www.unisim.co.uk/everyday'
+// Where a signed-in Universal ID with no company sets one up. Opened in a new
+// tab so nothing recorded in this one is lost.
+const SET_UP_COMPANY_URL = 'https://app.unisim.co.uk/branding'
 
 interface Props {
   cloud: Cloud
@@ -24,7 +27,9 @@ interface Props {
 // "In the cloud" — the sibling of the "On this device" list. Recording stays
 // local-first and free; this panel is the opt-in copy kept online against a
 // Universal ID, costing this app's one free "Everyday" token (refunded when the
-// cloud copy is deleted). A guest sees the invitation to create an ID.
+// cloud copy is deleted). A guest sees the invitation to create an ID; a
+// signed-in ID with no company sees why it can't save yet and where to set
+// one up.
 //
 // The sign-in dialog lives here but is mounted whether or not the panel is open,
 // because a Save-to-cloud press on a device recording opens it too.
@@ -161,6 +166,11 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
             >
               Create a free Universal ID →
             </button>
+          </div>
+        ) : cloud.noCompany ? (
+          /* Signed in, no company — nothing can be saved until there is one. */
+          <div className="rounded-xl border border-orange-200 bg-white p-4 dark:border-orange-900/60 dark:bg-slate-900">
+            <NoCompanyNotice />
           </div>
         ) : (
           <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
@@ -305,6 +315,17 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
           {cloud.error}
         </p>
       )}
+      {/* Save to cloud pressed with no company. With the panel open the same
+          notice is already showing inside it. */}
+      {cloud.noCompany && cloud.noCompanyPrompt && !open && (
+        <div
+          className="mt-2 rounded-xl border border-orange-200 bg-white p-4 dark:border-orange-900/60 dark:bg-slate-900"
+          role="status"
+          aria-live="polite"
+        >
+          <NoCompanyNotice />
+        </div>
+      )}
 
       {/* Mounted regardless of the panel state — Save to cloud on a device
           recording opens this too. */}
@@ -315,6 +336,30 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
         initialMode="signup"
       />
     </section>
+  )
+}
+
+/** Why a signed-in ID with no company can't save to the cloud, and the way out. */
+function NoCompanyNotice() {
+  return (
+    <div data-testid="cloud-no-company">
+      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        Cloud recordings are saved with your company.
+      </p>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        Your Universal ID doesn’t have a company yet, and setting one up is free. Your recordings
+        stay safe in this browser meanwhile — once the company is set up, reload this page to save
+        them to the cloud.
+      </p>
+      <a
+        href={SET_UP_COMPANY_URL}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 inline-flex rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-800"
+      >
+        Set up a company →
+      </a>
+    </div>
   )
 }
 

@@ -210,9 +210,10 @@ function Visualizer({ level, active }: { level: number; active: boolean }) {
 
 // "Save to cloud" for one on-device recording — the sibling of the download
 // buttons it sits next to. A guest gets the create-a-Universal-ID dialog; a
-// signed-in user spends this app's reusable token (returned when the cloud copy
-// is deleted). `size` matches the two rows it appears in: the result card's
-// download buttons and the compact recents rows.
+// signed-in ID with no company gets the set-up-a-company notice; anyone else
+// spends this app's reusable token (returned when the cloud copy is deleted).
+// `size` matches the two rows it appears in: the result card's download
+// buttons and the compact recents rows.
 function SaveToCloudButton({
   rec,
   cloud,
@@ -235,15 +236,17 @@ function SaveToCloudButton({
     <button
       type="button"
       onClick={() => void cloud.save(rec)}
-      disabled={saving || stored || (tooBig && cloud.signedIn)}
+      disabled={saving || stored || (tooBig && cloud.signedIn && !cloud.noCompany)}
       title={
         !cloud.signedIn
           ? 'Create a Universal ID to save recordings to the cloud for FREE.'
-          : stored
-            ? 'Already saved to the cloud'
-            : tooBig
-              ? `Too large for a cloud save (${fmtBytes(rec.blob.size)} — the limit is ${fmtBytes(MAX_CLOUD_BYTES)}). Download it instead.`
-              : 'Save to the cloud against your Universal ID'
+          : cloud.noCompany
+            ? 'Cloud recordings are kept with your company, and your Universal ID doesn’t have one yet.'
+            : stored
+              ? 'Already saved to the cloud'
+              : tooBig
+                ? `Too large for a cloud save (${fmtBytes(rec.blob.size)} — the limit is ${fmtBytes(MAX_CLOUD_BYTES)}). Download it instead.`
+                : 'Save to the cloud against your Universal ID'
       }
       className={[
         cls,
