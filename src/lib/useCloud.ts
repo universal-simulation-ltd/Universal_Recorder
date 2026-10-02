@@ -90,8 +90,11 @@ export interface Cloud {
 
 // The list is read here rather than through the SDK's `useHostedUploads`,
 // because that hook's column list predates `shared_with_org` (0194).
+// `storage_backend` (0226) says whether a recording's bytes are in Supabase
+// Storage or Cloudflare R2 — every read and delete needs it, and a row read
+// without it would be treated as 'supabase' and look missing if it is in R2.
 const UPLOAD_COLUMNS =
-  'id, org_id, user_id, product, storage_path, file_name, size_bytes, created_at, shared_with_org'
+  'id, org_id, user_id, product, storage_path, file_name, size_bytes, created_at, shared_with_org, storage_backend'
 
 function useRecorderUploads(orgId: string | null | undefined, signedIn: boolean) {
   const { supabase } = useUniversal()

@@ -1,7 +1,8 @@
 import {
-  consumeHostedUpload,
-  refundHostedUpload,
-  HOSTED_BUCKET,
+  storeHostedFile,
+  deleteHostedUpload,
+  downloadHostedObject,
+  hostedObjectUrl,
   type HostedUpload,
 } from '@unisim/sdk'
 import {
@@ -20,9 +21,17 @@ import type { StoredRecording } from './types'
 // credit, and deleting the cloud copy returns the token.
 //
 // Backend: migration 0041 (bucket + ledger + consume/refund RPCs), 0045 (per-app
-// free tokens), 0095 (audio/video MIME types on the bucket).
+// free tokens), 0095 (audio/video MIME types on the bucket), 0194 (private to
+// the saver until shared), 0226 (new saves may go to Cloudflare R2).
+//
+// Where the bytes live is the ROW's call, not this app's (0226): new saves
+// offer R2 and the server picks, and every row says which in
+// `storage_backend`. Older recordings — and anything an older native build
+// saves — are on Supabase Storage and stay there, so every read and delete goes
+// through the SDK helpers with the row's own backend. The saver-only rule
+// holds on both: the R2 signer asks the same question the bucket's policies do.
 
-type Supabase = Parameters<typeof consumeHostedUpload>[0]
+type Supabase = Parameters<typeof storeHostedFile>[0]
 
 /** SDK product code — must match `product` in main.tsx and the usage enum.
  *  Re-exported from `hostedPaths` so the object path and the product code can
@@ -77,26 +86,20 @@ export async function storeRecording(
   // at insert time and there is no second write to fail.
   const path = hostedRecordingPath(orgId, newObjectId(), fileName)
 
-  const consumed = await consumeHostedUpload(supabase, {
+  // Reserve the token, then upload to whichever backend the server chose;
+  // storeHostedFile refunds the token itself if the upload fails.
+  const stored = await storeHostedFile(supabase, {
     product: PRODUCT,
     storagePath: path,
     fileName,
-    sizeBytes: rec.blob.size,
+    body: rec.blob,
+    contentType: contentType(rec),
   })
-  if (!consumed.ok || !consumed.upload_id) {
-    return { ok: false, error: consumed.error ?? 'Could not save this recording to the cloud.' }
+  if (!stored.ok || !stored.upload_id) {
+    return { ok: false, error: stored.error ?? 'Could not save this recording to the cloud.' }
   }
 
-  const { error: upErr } = await supabase.storage
-    .from(HOSTED_BUCKET)
-    .upload(path, rec.blob, { contentType: contentType(rec), upsert: true })
-
-  if (upErr) {
-    await refundHostedUpload(supabase, consumed.upload_id)
-    return { ok: false, error: upErr.message }
-  }
-
-  return { ok: true, creditsRemaining: consumed.credits }
+  return { ok: true, creditsRemaining: stored.credits }
 }
 
 /** Share one of your own cloud recordings with your company, or stop sharing
@@ -124,7 +127,9 @@ export async function setRecordingShared(
 }
 
 /** Delete a cloud recording — the storage object first (the saver's storage RLS allows it, 0194),
- *  then the ledger row, which refunds the token.
+ *  then the ledger row, which refunds the token. An R2 row is removed and
+ *  refunded in one call to the hosted-files function, which applies the same
+ *  saver-only rule.
  *
  *  Removes EVERY path the bytes could be under, not just the one the ledger
  *  names: a legacy row says `pending`, so deleting only that would refund the
@@ -134,8 +139,7 @@ export async function deleteHostedRecording(
   supabase: Supabase,
   upload: HostedUpload,
 ): Promise<StoreResult> {
-  await supabase.storage.from(HOSTED_BUCKET).remove(hostedRecordingPathCandidates(upload))
-  const res = await refundHostedUpload(supabase, upload.id)
+  const res = await deleteHostedUpload(supabase, upload, hostedRecordingPathCandidates(upload))
   if (!res.ok) return { ok: false, error: res.error ?? 'Could not delete this cloud recording.' }
   return { ok: true, creditsRemaining: res.credits }
 }
@@ -170,7 +174,7 @@ async function downloadHostedBlob(supabase: Supabase, upload: HostedUpload): Pro
   let lastError: string | null = null
 
   for (const path of hostedRecordingPathCandidates(upload)) {
-    const { data, error } = await supabase.storage.from(HOSTED_BUCKET).download(path)
+    const { data, error } = await downloadHostedObject(supabase, { backend: upload.storage_backend, path })
     if (data && !error) return data
     lastError = error?.message ?? null
   }
@@ -184,18 +188,47 @@ async function downloadHostedBlob(supabase: Supabase, upload: HostedUpload): Pro
   throw new HostedObjectMissingError(upload.file_name || 'recording')
 }
 
-/** Download a cloud recording and hand back an object URL for playback. The
- *  bucket is private, so this goes through the authenticated download rather
- *  than a public URL. The caller owns the URL and must revoke it. */
+/** How long an R2 playback link lasts: the hosted-files function's ceiling,
+ *  long enough to listen to (and seek around) a recording left open. */
+const PLAYBACK_TTL_S = 6 * 60 * 60
+
+/** Hand back a URL for playback. The caller owns the URL and must revoke it
+ *  (a no-op for the R2 link, which is not an object URL).
+ *
+ *  - Supabase rows: the bucket is private, so this downloads through the
+ *    authenticated client and returns an object URL, as it always has.
+ *  - R2 rows (0226): a short-lived signed link straight to the recording, so
+ *    the player streams it and seeks with Range requests instead of pulling up
+ *    to 50 MB down first. A HEAD on the same link tells audio from video and
+ *    turns a missing object into the same `HostedObjectMissingError`. */
 export async function hostedRecordingUrl(
   supabase: Supabase,
   upload: HostedUpload,
 ): Promise<{ url: string; hasVideo: boolean }> {
+  if (upload.storage_backend === 'r2') return hostedR2RecordingUrl(supabase, upload)
   const data = await downloadHostedBlob(supabase, upload)
   // We upload with an explicit `video/*` or `audio/*` Content-Type (see
   // `contentType` below), so the downloaded blob's type tells us which element
   // to render. `.webm` alone can't — it's both containers.
   return { url: URL.createObjectURL(data), hasVideo: data.type.startsWith('video/') }
+}
+
+async function hostedR2RecordingUrl(
+  supabase: Supabase,
+  upload: HostedUpload,
+): Promise<{ url: string; hasVideo: boolean }> {
+  const missing = () => new HostedObjectMissingError(upload.file_name || 'recording')
+  const path = hostedRecordingPathCandidates(upload)[0]
+  if (!path) throw missing()
+  const { data: url, error } = await hostedObjectUrl(supabase, { backend: 'r2', path, expiresIn: PLAYBACK_TTL_S })
+  if (error || !url) {
+    if (!error || /not.?found|does not exist|404/i.test(error.message)) throw missing()
+    throw new Error(error.message)
+  }
+  const head = await fetch(url, { method: 'HEAD' })
+  if (head.status === 404) throw missing()
+  if (!head.ok) throw new Error(`Could not open this recording (${head.status}).`)
+  return { url, hasVideo: (head.headers.get('Content-Type') ?? '').startsWith('video/') }
 }
 
 /** Save a cloud recording straight to the device. */
