@@ -149,6 +149,21 @@ function fmtTime(sec: number): string {
   return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
+/**
+ * Ask the browser not to evict this site's storage under pressure — recordings
+ * kept "on this device" live in IndexedDB, which is otherwise best-effort and
+ * can be cleared without asking. Chrome decides silently (no prompt); Firefox
+ * may show its own permission prompt, once. Asked only after a recording has
+ * actually been kept, so nobody is asked on a first visit.
+ */
+function keepStorageIfAllowed(): void {
+  try {
+    void navigator.storage?.persist?.().catch(() => {})
+  } catch {
+    // Not supported here — storage stays best-effort.
+  }
+}
+
 function uid(): string {
   return `${Date.now().toString(36)}-${Math.floor(performance.now()).toString(36)}`
 }
@@ -368,6 +383,19 @@ export default function RecorderStudio() {
   }, [])
 
   useEffect(() => { void refreshMics(); void refreshCameras(); void refreshRecents() }, [refreshMics, refreshCameras, refreshRecents])
+
+  // A take lives only in memory until Stop, so closing or reloading the tab
+  // mid-recording loses all of it. Ask first while anything is being captured.
+  const capturing = status === 'recording' || status === 'paused' || starting
+  useEffect(() => {
+    if (!capturing) return
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [capturing])
 
   // Revoke the playback URL when it changes / unmounts.
   useEffect(() => () => { if (currentUrl) URL.revokeObjectURL(currentUrl) }, [currentUrl])
@@ -621,8 +649,17 @@ export default function RecorderStudio() {
       setCurrent(stored)
       setCurrentUrl(URL.createObjectURL(stored.blob))
       setStatus('done')
-      await saveRecording(stored)
-      void refreshRecents()
+      // Keeping a copy on the device is separate from the take itself. A long
+      // screen recording can be bigger than the browser will store; that used
+      // to land in the catch below, which set the page back to idle and hid a
+      // finished recording that was still in memory and downloadable.
+      try {
+        await saveRecording(stored)
+        void refreshRecents()
+        keepStorageIfAllowed()
+      } catch {
+        setWarning('This recording is too big to keep on this device, so it won’t be in your list. Download it now, or save it to the cloud, before you start another.')
+      }
     } catch (err) {
       setError((err as Error).message || 'Could not finish the recording.')
       setStatus('idle')
