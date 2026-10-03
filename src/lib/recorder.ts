@@ -10,6 +10,38 @@
 // MediaRecorder; everything stays on-device, nothing is uploaded.
 import type { PipShape, RecordingBlobResult, Source, WebcamOverlay } from './types'
 
+/**
+ * A frame clock that keeps ticking when the tab is hidden.
+ *
+ * ⚠️ requestAnimationFrame stops the moment the page is hidden — another tab in
+ * front, the window minimised, or (Chrome on macOS) fully covered by the app
+ * being demoed. Screen + webcam is composited on a canvas each frame, so with a
+ * rAF loop the recorded video froze on the last frame for exactly the stretch
+ * the person was off showing something else, which is the whole point of a
+ * screen recording. Main-thread timers are throttled in hidden tabs too (to
+ * once a second, then once a minute), but a dedicated worker's timers are not,
+ * and its messages are delivered to a hidden page. Falls back to rAF if a
+ * worker can't be made.
+ */
+function startFrameClock(fps: number, onTick: () => void): () => void {
+  try {
+    const src = `setInterval(function(){postMessage(0)},${Math.round(1000 / fps)})`
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }))
+    const worker = new Worker(url)
+    URL.revokeObjectURL(url)
+    worker.onmessage = () => onTick()
+    return () => worker.terminate()
+  } catch {
+    let raf = 0
+    const loop = () => {
+      onTick()
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }
+}
+
 // The picture-in-picture overlay: draws the screen full-bleed on a canvas, then
 // the webcam on top in one corner. Reads a live-mutable overlay config each frame
 // so the corner/size can be changed while recording. captureStream() gives the
@@ -20,7 +52,7 @@ class PipCompositor {
   private screenVideo = document.createElement('video')
   private webcamVideo = document.createElement('video')
   private stream: MediaStream
-  private raf = 0
+  private stopClock: () => void = () => {}
   private overlay: WebcamOverlay
 
   constructor(screenTrack: MediaStreamTrack, webcamTrack: MediaStreamTrack, overlay: WebcamOverlay) {
@@ -47,7 +79,8 @@ class PipCompositor {
     }
 
     this.stream = this.canvas.captureStream(30)
-    this.raf = requestAnimationFrame(this.draw)
+    this.draw()
+    this.stopClock = startFrameClock(30, this.draw)
   }
 
   setOverlay(overlay: WebcamOverlay) { this.overlay = overlay }
@@ -127,8 +160,6 @@ class PipCompositor {
       ctx.stroke()
       ctx.restore()
     }
-
-    this.raf = requestAnimationFrame(this.draw)
   }
 
   // Trace the overlay outline for the current shape onto ctx's path. 'circle'
@@ -165,7 +196,7 @@ class PipCompositor {
   }
 
   stop() {
-    cancelAnimationFrame(this.raf)
+    this.stopClock()
     this.stream.getTracks().forEach(t => t.stop())
     for (const el of [this.screenVideo, this.webcamVideo]) {
       el.srcObject = null
