@@ -747,10 +747,18 @@ export default function RecorderStudio() {
         </h1>
         <p className="mt-3 text-slate-600 max-w-xl mx-auto dark:text-slate-300">
           Capture your microphone, your system audio, your screen and your webcam — pick any
-          combination — then save it. Nothing is uploaded unless you deliberately save a
-          recording to the cloud.
+          combination — then save it. Recordings are kept in this browser, on this device; nothing
+          is uploaded unless you deliberately save one to the cloud.
         </p>
       </header>
+
+      {/* The first action, asked in the user's words (2026-10-05, first-run
+          pass): four unticked cards and no Record button used to leave a
+          newcomer guessing that ticking a card is how you begin — the
+          transport only appears once a source is chosen. */}
+      <h2 className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
+        What do you want to record?
+      </h2>
 
       {/* Source picker — pick any combination */}
       <section className={`grid grid-cols-1 gap-3 mb-2 ${isMobile ? '' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
@@ -1033,6 +1041,18 @@ export default function RecorderStudio() {
         <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
           On mobile, only microphone recording is available — system-audio and screen capture aren’t
           supported by mobile browsers.
+        </p>
+      )}
+
+      {/* Say the browser's permission prompt is coming BEFORE it appears, and
+          what to press — a bare "Allow localhost to use your microphone?" on
+          a first visit reads like something going wrong. */}
+      {!live && status !== 'done' && (sources.includes('mic') || usesWebcam) && (
+        <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
+          Your browser will ask to use your{' '}
+          {sources.includes('mic') && usesWebcam ? 'microphone and camera' : usesWebcam ? 'camera' : 'microphone'}
+          {' '}— choose <strong>Allow</strong>. It’s only used while you record, and the recording stays on
+          this device.
         </p>
       )}
 
