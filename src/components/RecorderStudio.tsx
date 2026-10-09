@@ -71,7 +71,8 @@ function loadOverlayPrefs(): OverlayPrefs {
 // The pre-record countdown prefs (beep mute + seconds) live in
 // ../lib/countdownPrefs, with the key history and why the option is worded
 // "Mute the countdown beep" (so it starts unticked while the beep still plays by
-// default). They're there so the v2 → v3 migration has a unit test.
+// default) and `seconds: 0` = "No countdown". They're there so the v2 → v3
+// migration has a unit test.
 
 // James, 2026-09-30: every Tune this app has a Reset to defaults. Recorder's own
 // part is the two device-local prefs above — the webcam overlay layout and the
@@ -305,7 +306,7 @@ export default function RecorderStudio({ onBusyChange }: {
   // Preview is acquiring the camera / grabbing the screen still.
   const [previewing, setPreviewing] = useState(false)
   const [surface, setSurface] = useState<'monitor' | 'window' | 'browser'>('monitor')
-  // Pre-record countdown — always runs; the beep can be muted. Persisted on this device.
+  // Pre-record countdown — Off / 3 / 5 / 10s (0 = Off); the beep can be muted. Persisted on this device.
   const [countdownMuted, setCountdownMuted] = useState(() => loadCountdownPrefs().muted)
   const [countdownSeconds, setCountdownSeconds] = useState(() => loadCountdownPrefs().seconds)
   // Seconds remaining while the pre-record countdown is playing (null otherwise).
@@ -1130,34 +1131,41 @@ export default function RecorderStudio({ onBusyChange }: {
 
         {/* Pre-record countdown — a visual count plus an audible beep run-in after
             the screen picker is confirmed, so the start cue is heard even when the
-            user has switched to the app they're demoing. The checkbox only mutes
-            the beep (unticked by default, so the beep plays); the count still runs. */}
+            user has switched to the app they're demoing. The picker is Off / 3 /
+            5 / 10s ("No countdown" = start the moment the picker is confirmed).
+            The checkbox only mutes the beep (unticked by default, so the beep
+            plays); it is hidden when the countdown is Off — nothing to mute. */}
         {!live && status !== 'done' && (
           <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
             <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={countdownMuted}
-                onChange={e => setCountdownMuted(e.target.checked)}
+              Countdown
+              <select
+                aria-label="Countdown length"
+                value={countdownSeconds}
+                onChange={e => setCountdownSeconds(Number(e.target.value))}
                 disabled={starting}
-                className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-              />
-              Mute the countdown beep
+                className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              >
+                {COUNTDOWN_CHOICES.map(n => (
+                  <option key={n} value={n}>{n === 0 ? 'No countdown' : `${n} seconds`}</option>
+                ))}
+              </select>
             </label>
-            <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                <select
-                  aria-label="Countdown length"
-                  value={countdownSeconds}
-                  onChange={e => setCountdownSeconds(Number(e.target.value))}
-                  disabled={starting}
-                  className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                >
-                  {COUNTDOWN_CHOICES.map(n => (
-                    <option key={n} value={n}>{n} seconds</option>
-                  ))}
-                </select>
-              </label>
-            <span className="text-[11px] text-slate-400">Beeps play out loud only — never recorded.</span>
+            {countdownSeconds > 0 && (
+              <>
+                <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={countdownMuted}
+                    onChange={e => setCountdownMuted(e.target.checked)}
+                    disabled={starting}
+                    className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  Mute the countdown beep
+                </label>
+                <span className="text-[11px] text-slate-400">Beeps play out loud only — never recorded.</span>
+              </>
+            )}
           </div>
         )}
 

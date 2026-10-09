@@ -7,10 +7,13 @@
 //
 // What is pinned: the option was "Beep countdown before recording" (ticked by
 // default, stored as v2 `{enabled}`); it is now "Mute the countdown beep"
-// (unticked by default, stored as v3 `{muted}`). A fresh user must get the beep;
-// anyone who turned the old beep OFF must stay muted; Reset clears both keys.
+// (unticked by default, stored as v3 `{muted}`), and the seconds picker gained
+// "No countdown" (`seconds: 0`). A fresh user must get the beeping 3s count;
+// anyone who turned the old option OFF used to start instantly, so they migrate
+// to Off (not a muted 3s count); Reset clears both keys.
 import assert from 'node:assert/strict'
 import {
+  COUNTDOWN_CHOICES,
   COUNTDOWN_PREFS_KEY,
   DEFAULT_COUNTDOWN_PREFS,
   LEGACY_COUNTDOWN_PREFS_KEY,
@@ -42,12 +45,28 @@ test('fresh user: nothing stored → unmuted, and nothing is written', () => {
   assert.equal(s.m.size, 0)
 })
 
-test('v2 enabled:false (turned the beep off) → muted, seconds kept, migrated', () => {
+test('picker choices: Off (0) / 3 / 5 / 10', () => {
+  assert.deepEqual(COUNTDOWN_CHOICES, [0, 3, 5, 10])
+})
+
+test('v2 enabled:false (used to start instantly) → Off, unmuted, migrated', () => {
   const s = memStore({ [LEGACY_COUNTDOWN_PREFS_KEY]: JSON.stringify({ enabled: false, seconds: 5 }) })
-  assert.deepEqual(loadCountdownPrefs(s), { muted: true, seconds: 5 })
+  assert.deepEqual(loadCountdownPrefs(s), { muted: false, seconds: 0 })
   assert.equal(s.getItem(LEGACY_COUNTDOWN_PREFS_KEY), null)
-  assert.deepEqual(JSON.parse(s.getItem(COUNTDOWN_PREFS_KEY)), { muted: true, seconds: 5 })
+  assert.deepEqual(JSON.parse(s.getItem(COUNTDOWN_PREFS_KEY)), { muted: false, seconds: 0 })
   // and it sticks on the next read
+  assert.deepEqual(loadCountdownPrefs(s), { muted: false, seconds: 0 })
+})
+
+test('v3 Off (seconds 0) is a valid stored choice and round-trips', () => {
+  const s = memStore()
+  saveCountdownPrefs({ muted: false, seconds: 0 }, s)
+  assert.deepEqual(loadCountdownPrefs(s), { muted: false, seconds: 0 })
+})
+
+test('v3 {muted:true} (already migrated from v2 on 2026-10-09) is kept as-is', () => {
+  // Indistinguishable from a real "mute the beep" choice, so it is not rewritten.
+  const s = memStore({ [COUNTDOWN_PREFS_KEY]: JSON.stringify({ muted: true, seconds: 5 }) })
   assert.deepEqual(loadCountdownPrefs(s), { muted: true, seconds: 5 })
 })
 

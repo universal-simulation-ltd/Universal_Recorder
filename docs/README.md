@@ -23,18 +23,22 @@ nothing is uploaded unless the user explicitly presses **Save to cloud** on one.
   size, adjustable live) composited via `<canvas>.captureStream()`, a live
   self-view while recording, in-page playback, and local-first recents (play,
   re-download in any format, delete).
-- **Pre-record countdown (beeps):** a configurable run-in (3 / 5 / 10s,
-  default 3s) — an on-screen "Recording starts in N…" plus one beep a second —
+- **Pre-record countdown (beeps):** a configurable run-in (No countdown / 3 /
+  5 / 10s, default 3s; "No countdown" starts recording the moment the picker is
+  confirmed) — an on-screen "Recording starts in N…" plus one beep a second —
   played *after* the screen picker is confirmed and *before* `MediaRecorder`
   starts, so the start cue is audible even when the user has switched to the
   app they're demoing. The beeps go to the speakers only and are never
   recorded. The option is **Mute the countdown beep** (unticked by default, so
   the beep plays); ticking it silences the beeps only — the count and its
-  timing are unchanged. Persisted in
+  timing are unchanged; it is hidden when the countdown is Off. Persisted in
   `localStorage['universal-recorder:countdown:v3']` (`{muted, seconds}`),
   written only on a real change; a v2 `{enabled, seconds}` value from the old
-  "Beep countdown before recording" option is migrated once (`muted =
-  !enabled`). Logic + key history in `src/lib/countdownPrefs.ts`; tested by
+  "Beep countdown before recording" option is migrated once (`enabled:false`
+  → Off, `{muted:false, seconds:0}`, because switching that option off used to
+  start recording instantly). `seconds: 0` = Off. A v3 `{muted:true}` written
+  by the 2026-10-09 build's migration can't be told apart from a real choice,
+  so it is kept. Logic + key history in `src/lib/countdownPrefs.ts`; tested by
   `npm run test:countdown-prefs`.
 - **Preview gate:** for screen / webcam recordings nothing turns on until the
   user presses the prominent **Preview** button — one action that lights up
