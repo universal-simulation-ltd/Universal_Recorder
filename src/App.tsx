@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { UniversalAppsNavBar, UpdateNotice, type AboutAppConfig } from '@unisim/sdk'
 // Generated — `npm run credits` after any dependency change. Never edit it by
 // hand: it is read off the installed tree, so a hand-kept list drifts from the
@@ -5,7 +6,7 @@ import { UniversalAppsNavBar, UpdateNotice, type AboutAppConfig } from '@unisim/
 // package we removed is worse than no list at all.
 import credits from './generated/credits.json'
 import ProductLogo from './components/Header/ProductLogo'
-import RecorderStudio from './components/RecorderStudio'
+import RecorderStudio, { resetRecorderPrefs } from './components/RecorderStudio'
 import { CONTAINER } from './lib/layout'
 import { useThemeStore } from './stores/themeStore'
 import { KNOWLEDGE_BASE } from './knowledge'
@@ -31,6 +32,10 @@ export default function App() {
   // they are told which one to paint; everything of ours themes off the class
   // with `dark:` variants.
   const theme = useThemeStore((s) => s.effective)
+  // Whether a take is starting / counting down / running / paused. Reset to
+  // defaults leaves Recorder's own prefs alone then (the SDK's part still runs),
+  // the same guard Compress and Converter use while they work.
+  const [busy, setBusy] = useState(false)
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 dark:bg-slate-950">
@@ -46,6 +51,9 @@ export default function App() {
         // articles, bundled from ./knowledge so they read offline.
         knowledgeBase={KNOWLEDGE_BASE}
         about={ABOUT}
+        // James, 2026-09-30: Tune this app's Reset to defaults also puts back
+        // the webcam overlay layout and the countdown (never recordings).
+        onResetDefaults={busy ? undefined : resetRecorderPrefs}
         productHomeHref={import.meta.env.BASE_URL}
         suiteSwitcherIconSrc={`${import.meta.env.BASE_URL}unisim-icon.png`}
         contentClassName={CONTAINER}
@@ -68,7 +76,7 @@ export default function App() {
       </div>
 
       <main className="flex-1">
-        <RecorderStudio />
+        <RecorderStudio onBusyChange={setBusy} />
       </main>
 
       <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
