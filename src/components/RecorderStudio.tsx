@@ -10,6 +10,7 @@ import { useCloud, type Cloud } from '../lib/useCloud'
 import type { ExportFormat, PipPosition, PipShape, PipSize, Source, StoredRecording, WebcamOverlay } from '../lib/types'
 import OverlayDesigner from './OverlayDesigner'
 import { useThemeStore } from '../stores/themeStore'
+import { COUNTDOWN_CHOICES, DEFAULT_COUNTDOWN_PREFS, clearCountdownPrefs, loadCountdownPrefs, saveCountdownPrefs } from '../lib/countdownPrefs'
 
 type Status = 'idle' | 'recording' | 'paused' | 'done'
 
@@ -67,37 +68,10 @@ function loadOverlayPrefs(): OverlayPrefs {
   }
 }
 
-// Persist the pre-record countdown choice (on/off + seconds) on this device, in
-// the same local-only style as the overlay prefs above. When enabled, a short
-// beep countdown plays after the screen picker is confirmed and before recording
-// starts, so the start cue is audible even when the user has switched away to the
-// app they're demoing.
-// The key is versioned, and `:v2` is what makes the default below take effect for
-// people who have used the app before. v1 wrote the prefs on mount, so everyone
-// who ever opened Recorder has `enabled: false` stored whether or not they ever
-// looked at the toggle — meaning a stored `false` said nothing about intent, and
-// flipping the default would have reached new visitors only. v2 writes only when
-// the user actually changes something (see the persist effect), so from here on a
-// stored value IS a choice and survives any future change of default.
-const COUNTDOWN_PREFS_KEY = 'universal-recorder:countdown:v2'
-interface CountdownPrefs {
-  enabled: boolean
-  seconds: number
-}
-const COUNTDOWN_CHOICES = [3, 5, 10]
-const DEFAULT_COUNTDOWN_PREFS: CountdownPrefs = { enabled: true, seconds: 3 }
-
-function loadCountdownPrefs(): CountdownPrefs {
-  try {
-    const raw = localStorage.getItem(COUNTDOWN_PREFS_KEY)
-    if (!raw) return DEFAULT_COUNTDOWN_PREFS
-    const p = JSON.parse(raw) as Partial<CountdownPrefs>
-    const seconds = typeof p.seconds === 'number' && p.seconds > 0 ? p.seconds : DEFAULT_COUNTDOWN_PREFS.seconds
-    return { enabled: typeof p.enabled === 'boolean' ? p.enabled : DEFAULT_COUNTDOWN_PREFS.enabled, seconds }
-  } catch {
-    return DEFAULT_COUNTDOWN_PREFS
-  }
-}
+// The pre-record countdown prefs (beep mute + seconds) live in
+// ../lib/countdownPrefs, with the key history and why the option is worded
+// "Mute the countdown beep" (so it starts unticked while the beep still plays by
+// default). They're there so the v2 → v3 migration has a unit test.
 
 // James, 2026-09-30: every Tune this app has a Reset to defaults. Recorder's own
 // part is the two device-local prefs above — the webcam overlay layout and the
@@ -109,8 +83,8 @@ const RESET_PREFS_EVENT = 'universal-recorder:reset-prefs'
 export function resetRecorderPrefs(): void {
   try {
     localStorage.removeItem(OVERLAY_PREFS_KEY)
-    localStorage.removeItem(COUNTDOWN_PREFS_KEY)
   } catch { /* storage disabled — nothing was persisted */ }
+  clearCountdownPrefs() // current key and the legacy v2 one
   window.dispatchEvent(new Event(RESET_PREFS_EVENT))
 }
 
@@ -331,8 +305,8 @@ export default function RecorderStudio({ onBusyChange }: {
   // Preview is acquiring the camera / grabbing the screen still.
   const [previewing, setPreviewing] = useState(false)
   const [surface, setSurface] = useState<'monitor' | 'window' | 'browser'>('monitor')
-  // Pre-record countdown (audible beeps) — persisted on this device.
-  const [countdownEnabled, setCountdownEnabled] = useState(() => loadCountdownPrefs().enabled)
+  // Pre-record countdown — always runs; the beep can be muted. Persisted on this device.
+  const [countdownMuted, setCountdownMuted] = useState(() => loadCountdownPrefs().muted)
   const [countdownSeconds, setCountdownSeconds] = useState(() => loadCountdownPrefs().seconds)
   // Seconds remaining while the pre-record countdown is playing (null otherwise).
   const [countdownLeft, setCountdownLeft] = useState<number | null>(null)
@@ -459,11 +433,9 @@ export default function RecorderStudio({ onBusyChange }: {
   const countdownPrefsAtLoad = useRef(loadCountdownPrefs())
   useEffect(() => {
     const initial = countdownPrefsAtLoad.current
-    if (countdownEnabled === initial.enabled && countdownSeconds === initial.seconds) return
-    try {
-      localStorage.setItem(COUNTDOWN_PREFS_KEY, JSON.stringify({ enabled: countdownEnabled, seconds: countdownSeconds }))
-    } catch { /* storage disabled — the choice just won't persist */ }
-  }, [countdownEnabled, countdownSeconds])
+    if (countdownMuted === initial.muted && countdownSeconds === initial.seconds) return
+    saveCountdownPrefs({ muted: countdownMuted, seconds: countdownSeconds })
+  }, [countdownMuted, countdownSeconds])
 
   // Reset to defaults (see resetRecorderPrefs): the keys are already gone, so put
   // the live controls back to the defaults. Re-baseline the countdown's
@@ -472,7 +444,7 @@ export default function RecorderStudio({ onBusyChange }: {
   useEffect(() => {
     const onReset = () => {
       countdownPrefsAtLoad.current = DEFAULT_COUNTDOWN_PREFS
-      setCountdownEnabled(DEFAULT_COUNTDOWN_PREFS.enabled)
+      setCountdownMuted(DEFAULT_COUNTDOWN_PREFS.muted)
       setCountdownSeconds(DEFAULT_COUNTDOWN_PREFS.seconds)
       setPipPosition(DEFAULT_OVERLAY_PREFS.position)
       setPipSize(DEFAULT_OVERLAY_PREFS.size)
@@ -638,7 +610,8 @@ export default function RecorderStudio({ onBusyChange }: {
         webcamDeviceId: camId || undefined,
         webcam: sources.includes('webcam') ? overlayConfig() : undefined,
         displaySurface: sources.includes('screen') ? surface : undefined,
-        countdownSeconds: countdownEnabled ? countdownSeconds : 0,
+        countdownSeconds,
+        countdownMuted,
         onCountdownTick: n => setCountdownLeft(n > 0 ? n : null),
         onLevel: setLevel,
         onWarning: setWarning,
@@ -1155,23 +1128,23 @@ export default function RecorderStudio({ onBusyChange }: {
         {/* Audio visualisation — animated while recording and while playing back. */}
         <Visualizer level={recording ? level : playbackLevel} active={recording || playing} />
 
-        {/* Pre-record countdown — an audible beep run-in after the screen picker
-            is confirmed, so the start cue is heard even when the user has switched
-            to the app they're demoing. */}
+        {/* Pre-record countdown — a visual count plus an audible beep run-in after
+            the screen picker is confirmed, so the start cue is heard even when the
+            user has switched to the app they're demoing. The checkbox only mutes
+            the beep (unticked by default, so the beep plays); the count still runs. */}
         {!live && status !== 'done' && (
           <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
             <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               <input
                 type="checkbox"
-                checked={countdownEnabled}
-                onChange={e => setCountdownEnabled(e.target.checked)}
+                checked={countdownMuted}
+                onChange={e => setCountdownMuted(e.target.checked)}
                 disabled={starting}
                 className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
               />
-              Beep countdown before recording
+              Mute the countdown beep
             </label>
-            {countdownEnabled && (
-              <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                 <select
                   aria-label="Countdown length"
                   value={countdownSeconds}
@@ -1184,7 +1157,6 @@ export default function RecorderStudio({ onBusyChange }: {
                   ))}
                 </select>
               </label>
-            )}
             <span className="text-[11px] text-slate-400">Beeps play out loud only — never recorded.</span>
           </div>
         )}

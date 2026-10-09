@@ -261,6 +261,12 @@ export interface StartOptions {
    * they're demoing and can't see the page — the tones cue the real start.
    */
   countdownSeconds?: number
+  /**
+   * Mute the countdown's beeps ("Mute the countdown beep"). The countdown still
+   * runs for `countdownSeconds` and still fires `onCountdownTick`, so the
+   * on-screen count and the start timing are unchanged — only the sound goes.
+   */
+  countdownMuted?: boolean
   /** Called each second of the countdown with the number remaining (…3, 2, 1, 0). */
   onCountdownTick?: (secondsLeft: number) => void
 }
@@ -439,7 +445,7 @@ export class AudioRecorder {
     // beeps play to the speakers only (not the recording graph), so they never
     // end up in the file.
     if (opts.countdownSeconds && opts.countdownSeconds > 0) {
-      await this.playCountdown(opts.countdownSeconds, opts.onCountdownTick)
+      await this.playCountdown(opts.countdownSeconds, opts.onCountdownTick, opts.countdownMuted)
     }
 
     this.recorder.start(250)
@@ -453,10 +459,11 @@ export class AudioRecorder {
    * that signals recording is about to begin. Resolves shortly after the final
    * tone so the caller can start the recorder. Uses the existing (already
    * resumed) AudioContext and routes to `ctx.destination` — the speakers — so
-   * nothing is recorded. Silent (but still timed) if audio output is unavailable.
+   * nothing is recorded. Silent (but still timed) if audio output is unavailable
+   * or the user ticked "Mute the countdown beep".
    */
-  private playCountdown(seconds: number, onTick?: (n: number) => void): Promise<void> {
-    const ctx = this.ctx
+  private playCountdown(seconds: number, onTick?: (n: number) => void, muted = false): Promise<void> {
+    const ctx = muted ? undefined : this.ctx
     const beep = (freq: number, dur: number, atSec: number) => {
       if (!ctx) return
       const t = ctx.currentTime + atSec

@@ -12,7 +12,8 @@
     "typecheck": "tsc -b --noEmit",
     "credits": "node ../scripts/gen-credits.mjs . --repo https://github.com/universal-simulation-ltd/Universal_Recorder",
     "test:hosted-paths": "node --experimental-strip-types scripts/hostedPath.test.mjs",
-    "test:theme": "node scripts/theme.test.mjs"
+    "test:theme": "node scripts/theme.test.mjs",
+    "test:countdown-prefs": "node --experimental-strip-types scripts/countdownPrefs.test.mjs"
   },
   "dependencies": {
     "@breezystack/lamejs": "^1.2.7",

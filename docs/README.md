@@ -23,12 +23,19 @@ nothing is uploaded unless the user explicitly presses **Save to cloud** on one.
   size, adjustable live) composited via `<canvas>.captureStream()`, a live
   self-view while recording, in-page playback, and local-first recents (play,
   re-download in any format, delete).
-- **Pre-record countdown (beeps):** an optional, configurable audible beep
-  run-in (default 3s, off by default) played *after* the screen picker is
-  confirmed and *before* `MediaRecorder` starts — so the start cue is audible
-  even when the user has switched to the app they're demoing. The beeps go to
-  the speakers only and are never recorded. Persisted in
-  `localStorage['universal-recorder:countdown']` (`{enabled, seconds}`).
+- **Pre-record countdown (beeps):** a configurable run-in (3 / 5 / 10s,
+  default 3s) — an on-screen "Recording starts in N…" plus one beep a second —
+  played *after* the screen picker is confirmed and *before* `MediaRecorder`
+  starts, so the start cue is audible even when the user has switched to the
+  app they're demoing. The beeps go to the speakers only and are never
+  recorded. The option is **Mute the countdown beep** (unticked by default, so
+  the beep plays); ticking it silences the beeps only — the count and its
+  timing are unchanged. Persisted in
+  `localStorage['universal-recorder:countdown:v3']` (`{muted, seconds}`),
+  written only on a real change; a v2 `{enabled, seconds}` value from the old
+  "Beep countdown before recording" option is migrated once (`muted =
+  !enabled`). Logic + key history in `src/lib/countdownPrefs.ts`; tested by
+  `npm run test:countdown-prefs`.
 - **Preview gate:** for screen / webcam recordings nothing turns on until the
   user presses the prominent **Preview** button — one action that lights up
   whatever's ticked (live camera + a frozen still of the real screen for the PiP
