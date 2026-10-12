@@ -14,6 +14,7 @@
 //
 // Plain Node (no test runner), in the same style as `hostedPath.test.mjs`.
 
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
@@ -53,6 +54,17 @@ check(head.includes("classList.add('dark')"), 'puts the dark class on <html> bef
 // light ground first and the dark one once the bundle catches up.
 check(head.includes('prefers-color-scheme: dark'), "honours 'system' with the OS dark setting")
 check(!head.includes("classList.remove('dark')"), 'never removes the class — light is the default, so it only ever adds')
+
+// The Content-Security-Policy (public/_headers) allows this script by its hash
+// and nothing else inline, so editing the script without updating the hash
+// would leave it blocked on the live site: a pale first frame for dark users.
+console.log('\nthe Content-Security-Policy:')
+const policy = read('public/_headers')
+const inline = [...head.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1])
+for (const body of inline) {
+  const hash = `'sha256-${createHash('sha256').update(body).digest('base64')}'`
+  check(policy.includes(hash), `public/_headers allows the inline script by its hash ${hash}`)
+}
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

@@ -58,6 +58,8 @@ it falls back to the git short SHA (or `dev`).
 
 ## Privacy
 
+The full, checkable account is in [PRIVACY.md](PRIVACY.md).
+
 Recording, compositing, encoding and storage all run client-side, and that is the
 only path a guest ever uses. There is exactly **one** upload path and it is
 explicit: pressing **Save to cloud** on a recording, while signed in with a
