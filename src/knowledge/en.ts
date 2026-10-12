@@ -183,7 +183,7 @@ The app does not transcribe or analyse your recordings, and it has no speech rec
 - **Loading the app**, and the notes on what has changed in each update.
 - **Signing in with a Universal ID**, only if you choose to. You can record, convert and download without an account.
 - **A note that the app was opened**, sent once per visit if you are signed in. It includes nothing about your recordings.
-- **An “in use” signal**, sent every 45 seconds while the app is open and on screen, so the app can show how many people are using it. It holds the app's name, a random ID created on this device, and your account if you are signed in.
+- **An anonymous count of daily opens**: the first time you open the app each day, after your first click or key press, it sends the app's name and the kind of platform ("web"). No identifier, no account and nothing about what you do. A "counted today" mark stays on this device and is never sent.
 - **Cloud saves**, only when you ask for one, as described in the article on saving to the cloud.
 
 ## Converting formats

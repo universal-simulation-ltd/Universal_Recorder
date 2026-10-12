@@ -183,7 +183,7 @@ Die App transkribiert oder analysiert Ihre Aufnahmen nicht und hat keine Sprache
 - **Das Laden der App** sowie die Hinweise, was sich mit jedem Update geändert hat.
 - **Die Anmeldung mit einer Universal ID**, nur wenn Sie es wünschen. Aufnehmen, Umwandeln und Herunterladen funktionieren ohne Konto.
 - **Ein Hinweis, dass die App geöffnet wurde**, einmal pro Besuch, wenn Sie angemeldet sind. Er enthält nichts über Ihre Aufnahmen.
-- **Ein „In Benutzung“-Signal**, das alle 45 Sekunden gesendet wird, solange die App geöffnet und auf dem Bildschirm zu sehen ist, damit sie anzeigen kann, wie viele Menschen sie nutzen. Es enthält den Namen der App, eine zufällige, auf diesem Gerät erzeugte ID und Ihr Konto, wenn Sie angemeldet sind.
+- **Eine anonyme Zählung der täglichen Öffnungen**: Beim ersten Öffnen der App an jedem Tag, nach Ihrem ersten Klick oder Tastendruck, sendet sie den Namen der App und die Art der Plattform („web“). Keine Kennung, kein Konto und nichts darüber, was Sie tun. Eine Markierung „heute schon gezählt“ bleibt auf diesem Gerät und wird nie gesendet.
 - **Speicherungen in der Cloud**, nur wenn Sie eine anfordern, wie im Artikel zum Speichern in der Cloud beschrieben.
 
 ## Formate umwandeln

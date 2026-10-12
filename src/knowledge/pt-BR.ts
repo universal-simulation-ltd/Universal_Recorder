@@ -183,7 +183,7 @@ O aplicativo não transcreve nem analisa as suas gravações, e não tem reconhe
 - **Carregar o aplicativo**, e as notas sobre o que mudou em cada atualização.
 - **Entrar com um Universal ID**, só se você quiser. Dá para gravar, converter e baixar sem conta.
 - **Um aviso de que o aplicativo foi aberto**, enviado uma vez por visita se você estiver conectado. Ele não inclui nada sobre as suas gravações.
-- **Um sinal de “em uso”**, enviado a cada 45 segundos enquanto o aplicativo está aberto e na tela, para mostrar quantas pessoas o estão usando. Ele contém o nome do aplicativo, um ID aleatório criado neste aparelho e a sua conta, se você estiver conectado.
+- **Uma contagem anônima de aberturas diárias**: na primeira vez que você abre o aplicativo a cada dia, depois do seu primeiro clique ou tecla pressionada, ele envia o nome do aplicativo e o tipo de plataforma ("web"). Nenhum identificador, nenhuma conta e nada sobre o que você faz. Uma marca de "já contado hoje" fica neste aparelho e nunca é enviada.
 - **Gravações salvas na nuvem**, só quando você pede, como descrito no artigo sobre salvar na nuvem.
 
 ## Converter formatos

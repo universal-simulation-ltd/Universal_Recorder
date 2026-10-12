@@ -183,7 +183,7 @@ Uygulama kayıtlarınızı yazıya dökmez ya da analiz etmez ve konuşma tanım
 - **Uygulamanın yüklenmesi** ve her güncellemede nelerin değiştiğine dair notlar.
 - **Universal ID ile oturum açma**, yalnızca siz isterseniz. Hesap olmadan kaydedebilir, dönüştürebilir ve indirebilirsiniz.
 - **Uygulamanın açıldığına dair bir not**, oturum açtıysanız ziyaret başına bir kez gönderilir. Kayıtlarınızla ilgili hiçbir şey içermez.
-- **Bir “kullanımda” sinyali**, uygulama açık ve ekranda olduğu sürece her 45 saniyede bir gönderilir; böylece uygulama kaç kişinin kullandığını gösterebilir. Uygulamanın adını, bu cihazda oluşturulan rastgele bir kimliği ve oturum açtıysanız hesabınızı içerir.
+- **Anonim bir günlük açılış sayımı**: uygulamayı her gün ilk açışınızda, ilk tıklamanızdan veya tuşa basmanızdan sonra uygulamanın adını ve platform türünü ("web") gönderir. Hiçbir tanımlayıcı, hesap ya da ne yaptığınıza dair bir şey yoktur. "Bugün sayıldı" işareti bu cihazda kalır ve asla gönderilmez.
 - **Bulut kayıtları**, yalnızca siz istediğinizde; buluta kaydetme makalesinde açıklandığı gibi.
 
 ## Biçim dönüştürme

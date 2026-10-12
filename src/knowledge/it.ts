@@ -183,7 +183,7 @@ L’app non trascrive e non analizza le tue registrazioni, e non ha alcun ricono
 - **Il caricamento dell’app**, e le note sulle novità di ogni aggiornamento.
 - **L’accesso con un Universal ID**, solo se lo scegli. Puoi registrare, convertire e scaricare senza un account.
 - **Una nota che l’app è stata aperta**, inviata una volta per visita se hai effettuato l’accesso. Non contiene nulla sulle tue registrazioni.
-- **Un segnale «in uso»**, inviato ogni 45 secondi mentre l’app è aperta e visibile sullo schermo, così può mostrare quante persone la stanno usando. Contiene il nome dell’app, un ID casuale creato su questo dispositivo e il tuo account se hai effettuato l’accesso.
+- **Un conteggio anonimo delle aperture quotidiane**: la prima volta che apri l’app ogni giorno, dopo il tuo primo clic o tasto premuto, invia il nome dell’app e il tipo di piattaforma («web»). Nessun identificativo, nessun account e niente su ciò che fai. Un segno «già contato oggi» resta su questo dispositivo e non viene mai inviato.
 - **I salvataggi nel cloud**, solo quando ne chiedi uno, come descritto nell’articolo sul salvataggio nel cloud.
 
 ## Convertire i formati

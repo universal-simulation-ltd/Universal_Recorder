@@ -183,7 +183,7 @@ La aplicación no transcribe ni analiza sus grabaciones, y no tiene reconocimien
 - **Cargar la aplicación**, y las notas sobre las novedades de cada actualización.
 - **Iniciar sesión con un Universal ID**, solo si usted quiere. Puede grabar, convertir y descargar sin cuenta.
 - **Un aviso de que se abrió la aplicación**, enviado una vez por visita si ha iniciado sesión. No incluye nada sobre sus grabaciones.
-- **Una señal de «en uso»**, enviada cada 45 segundos mientras la aplicación está abierta y en pantalla, para poder mostrar cuántas personas la usan. Contiene el nombre de la aplicación, un identificador aleatorio creado en este dispositivo y su cuenta si ha iniciado sesión.
+- **Un recuento anónimo de aperturas diarias**: la primera vez que abre la aplicación cada día, tras su primer clic o pulsación de tecla, envía el nombre de la aplicación y el tipo de plataforma («web»). Ningún identificador, ninguna cuenta y nada sobre lo que hace. Una marca de «ya contado hoy» se queda en este dispositivo y nunca se envía.
 - **Los guardados en la nube**, solo cuando usted pide uno, como se describe en el artículo sobre guardar en la nube.
 
 ## Convertir formatos

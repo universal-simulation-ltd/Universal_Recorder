@@ -183,7 +183,7 @@ A aplicação não transcreve nem analisa as suas gravações, e não tem reconh
 - **Carregar a aplicação**, e as notas sobre o que mudou em cada atualização.
 - **Iniciar sessão com um Universal ID**, apenas se quiser. Pode gravar, converter e transferir sem conta.
 - **Uma nota de que a aplicação foi aberta**, enviada uma vez por visita se tiver sessão iniciada. Não inclui nada sobre as suas gravações.
-- **Um sinal de «em utilização»**, enviado a cada 45 segundos enquanto a aplicação está aberta e visível no ecrã, para poder mostrar quantas pessoas a estão a usar. Contém o nome da aplicação, um ID aleatório criado neste dispositivo e a sua conta, se tiver sessão iniciada.
+- **Uma contagem anónima de aberturas diárias**: na primeira vez que abre a aplicação em cada dia, depois do seu primeiro clique ou da primeira tecla premida, envia o nome da aplicação e o tipo de plataforma («web»). Nenhum identificador, nenhuma conta e nada sobre o que faz. Uma marca de «já contado hoje» fica neste dispositivo e nunca é enviada.
 - **Gravações guardadas na nuvem**, apenas quando pede uma, como descrito no artigo sobre guardar na nuvem.
 
 ## Converter formatos
