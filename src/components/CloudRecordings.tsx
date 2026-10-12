@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { SignInDialog, useUniversal, type HostedUpload } from '@unisim/sdk'
+import { SignInDialog, useUniversal, withReturnUrl, type HostedUpload } from '@unisim/sdk'
 import RecordingPlayer from './RecordingPlayer'
 import { HostedObjectMissingError, downloadHostedRecording, fmtBytes, hostedRecordingUrl } from '../lib/hostedRecordings'
 import type { Cloud, CloudUpload } from '../lib/useCloud'
@@ -351,7 +351,7 @@ function NoCompanyNotice() {
         them to the cloud.
       </p>
       <a
-        href={SET_UP_COMPANY_URL}
+        href={withReturnUrl(SET_UP_COMPANY_URL)}
         target="_blank"
         rel="noreferrer"
         className="mt-3 inline-flex rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-800"
