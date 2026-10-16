@@ -205,6 +205,8 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                       <button
                         onClick={() => void onPlay(u)}
                         disabled={loadingId !== null}
+                        aria-expanded={playing?.id === u.id}
+                        aria-controls={`cloud-player-${u.id}`}
                         className="shrink-0 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-orange-500 disabled:opacity-50"
                       >
                         {loadingId === u.id ? 'Loading…' : playing?.id === u.id ? 'Close' : '▶ Play'}
@@ -262,14 +264,18 @@ export default function CloudRecordings({ cloud, onLevel, onPlayingChange }: Pro
                         )}
                       </div>
                     )}
+                    {/* id + the Play button's aria-controls: the SDK scrolls the
+                        opened player fully on screen. */}
                     {playing?.id === u.id && (
-                      <RecordingPlayer
-                        key={playing.url}
-                        url={playing.url}
-                        hasVideo={playing.hasVideo}
-                        onLevel={onLevel}
-                        onPlayingChange={onPlayingChange}
-                      />
+                      <div id={`cloud-player-${u.id}`}>
+                        <RecordingPlayer
+                          key={playing.url}
+                          url={playing.url}
+                          hasVideo={playing.hasVideo}
+                          onLevel={onLevel}
+                          onPlayingChange={onPlayingChange}
+                        />
+                      </div>
                     )}
                   </li>
                   )
