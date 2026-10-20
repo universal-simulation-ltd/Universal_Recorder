@@ -141,50 +141,20 @@ Puede eliminar cualquier grabación de la lista, o usar **Delete all** (eliminar
 
 ## Guardar una copia segura
 
-El almacenamiento del navegador es cómodo, pero no es una copia de seguridad. Para todo lo que le importe, descárguelo y guarde el archivo en un lugar seguro. Si ha iniciado sesión con un Universal ID, también puede guardar una grabación en línea, como explica el artículo sobre guardar en la nube.`,
-  },
-  {
-    id: 'saving-to-the-cloud',
-    title: 'Guardar una grabación en la nube',
-    summary: 'La única forma, opcional, de que una grabación salga de su dispositivo.',
-    group: 'Privacidad y seguridad',
-    body: `Grabar, convertir y almacenar ocurre siempre en su dispositivo. Solo hay una forma de que una grabación salga de él: pulsar **Save to cloud** (guardar en la nube) en esa grabación. No se sube nada si usted no lo hace.
-
-## Cómo funciona
-
-- Tiene que haber iniciado sesión con un Universal ID. Crearlo es gratis.
-- Guardar grabaciones en la nube es gratis con un Universal ID. Las cuentas gratuitas tienen un límite generoso: si alguna vez lo alcanza, elimine una grabación de la nube que ya no necesite. Si necesita más, díganoslo en unisim.co.uk/support.
-- Cada guardado en la nube está limitado a 50 MB. Eso son horas de audio, pero solo unos minutos de vídeo de pantalla, así que las grabaciones de vídeo largas solo se pueden descargar. El tamaño se comprueba antes de que empiece la subida.
-- Si una subida falla, no cuenta para su límite.
-
-## Quién puede acceder
-
-La copia en la nube se guarda en un almacenamiento privado y no tiene enlace público. Solo usted puede acceder a ella, iniciando sesión con el Universal ID con el que la guardó. Si su Universal ID pertenece a una empresa con más personas, cada grabación en la nube tiene una casilla **Share with** en el panel **In the cloud**. Empieza sin marcar. Márquela y todas las personas de su empresa podrán reproducir y descargar esa grabación, pero solo usted podrá eliminarla. Desmárquela para que vuelva a ser privada. Viaja hacia y desde el almacenamiento mediante una conexión cifrada.
-
-## Usarla desde otro dispositivo
-
-Cuando una grabación está en la nube, puede iniciar sesión en otro dispositivo y reproducirla o descargarla desde el panel **In the cloud** (en la nube). Permanece allí hasta que la elimine.
-
-## Lo que no es
-
-Un guardado en la nube es una copia de una sola grabación, no una sincronización de toda su biblioteca. Sus otras grabaciones se quedan en el dispositivo donde las hizo. Eliminar una grabación de este dispositivo no elimina su copia en la nube, y eliminar la copia en la nube no elimina la de este dispositivo.`,
+El almacenamiento del navegador es cómodo, pero no es una copia de seguridad. Para todo lo que le importe, descárguelo y guarde el archivo en un lugar seguro.`,
   },
   {
     id: 'what-leaves-your-device',
     title: 'Qué sale de su dispositivo',
-    summary: 'Nada de lo que graba, salvo que decida guardarlo en la nube.',
+    summary: 'Nada de lo que graba.',
     group: 'Privacidad y seguridad',
-    body: `Su micrófono, su cámara y su pantalla los capta, graba y guarda su propio navegador. Salvo que pulse **Save to cloud** en una grabación, nada se envía a ninguna parte: ni audio, ni vídeo, ni vista previa, ni captura de pantalla.
+    body: `Su micrófono, su cámara y su pantalla los capta, graba y guarda su propio navegador. Nada se envía a ninguna parte: ni audio, ni vídeo, ni vista previa, ni captura de pantalla.
 
 La aplicación no transcribe ni analiza sus grabaciones, y no tiene reconocimiento de voz.
 
 ## Para qué usa internet la aplicación
 
 - **Cargar la aplicación**, y las notas sobre las novedades de cada actualización.
-- **Iniciar sesión con un Universal ID**, solo si usted quiere. Puede grabar, convertir y descargar sin cuenta.
-- **Un aviso de que se abrió la aplicación**, enviado una vez por visita si ha iniciado sesión. No incluye nada sobre sus grabaciones.
-- **Un recuento anónimo de aperturas diarias**: la primera vez que abre la aplicación cada día, tras su primer clic o pulsación de tecla, envía el nombre de la aplicación y el tipo de plataforma («web»). Ningún identificador, ninguna cuenta y nada sobre lo que hace. Una marca de «ya contado hoy» se queda en este dispositivo y nunca se envía.
-- **Los guardados en la nube**, solo cuando usted pide uno, como se describe en el artículo sobre guardar en la nube.
 
 ## Convertir formatos
 

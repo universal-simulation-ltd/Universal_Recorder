@@ -1,7 +1,7 @@
 // Pre-record countdown prefs (beep mute + seconds), persisted on this device.
 //
 // ⚠️ This module imports NOTHING, so `npm run test:countdown-prefs` can load it
-// under Node's type-stripping (same rule as hostedPaths.ts).
+// under Node's type-stripping.
 //
 // Once the screen picker is confirmed, an on-screen "Recording starts in N…"
 // counts down before MediaRecorder starts. The beep is the audible half of it —

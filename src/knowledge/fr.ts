@@ -141,50 +141,20 @@ Vous pouvez supprimer n’importe quel enregistrement de la liste, ou utiliser *
 
 ## Garder une copie en sécurité
 
-Le stockage du navigateur est pratique, mais ce n’est pas une sauvegarde. Pour tout ce qui compte, téléchargez l’enregistrement et gardez le fichier en lieu sûr. Si vous êtes connecté avec un Universal ID, vous pouvez aussi conserver un enregistrement en ligne, comme l’explique l’article sur l’enregistrement dans le cloud.`,
-  },
-  {
-    id: 'saving-to-the-cloud',
-    title: 'Enregistrer un enregistrement dans le cloud',
-    summary: 'La seule façon, facultative, dont un enregistrement peut quitter votre appareil.',
-    group: 'Confidentialité et sécurité',
-    body: `L’enregistrement, la conversion et le stockage se font tous sur votre appareil. Il n’existe qu’un seul moyen pour qu’un enregistrement le quitte : appuyer sur **Save to cloud** (enregistrer dans le cloud) pour cet enregistrement. Rien n’est envoyé si vous ne le faites pas.
-
-## Comment cela fonctionne
-
-- Vous devez être connecté avec un Universal ID. La création d’un compte est gratuite.
-- Conserver vos enregistrements dans le cloud est gratuit avec un Universal ID. Les comptes gratuits disposent d’une limite généreuse : si vous l’atteignez un jour, supprimez un enregistrement dans le cloud dont vous n’avez plus besoin. S’il vous en faut davantage, dites-le-nous sur unisim.co.uk/support.
-- Chaque enregistrement dans le cloud est limité à 50 Mo. Cela représente des heures d’audio, mais seulement quelques minutes de vidéo d’écran : les longs enregistrements vidéo restent donc à télécharger uniquement. La taille est vérifiée avant le début de l’envoi.
-- Si un envoi échoue, il n’est pas décompté de votre limite.
-
-## Qui peut y accéder
-
-La copie dans le cloud est conservée dans un espace de stockage privé et n’a pas de lien public. Vous seul pouvez y accéder, en vous connectant avec l’Universal ID sous lequel vous l’avez enregistrée. Si votre Universal ID appartient à une entreprise qui compte d’autres personnes, chaque enregistrement dans le cloud a une case **Share with** dans le panneau **In the cloud**. Elle est décochée au départ. Cochez-la et toutes les personnes de votre entreprise pourront lire et télécharger cet enregistrement, mais vous seul pourrez le supprimer. Décochez-la pour le rendre à nouveau privé. Elle transite vers et depuis le stockage par une connexion chiffrée.
-
-## L’utiliser depuis un autre appareil
-
-Une fois un enregistrement dans le cloud, vous pouvez vous connecter sur un autre appareil et l’écouter ou le télécharger depuis le panneau **In the cloud** (dans le cloud). Il y reste jusqu’à ce que vous le supprimiez.
-
-## Ce que ce n’est pas
-
-Un enregistrement dans le cloud est la copie d’un seul enregistrement, pas une synchronisation de toute votre bibliothèque. Vos autres enregistrements restent sur l’appareil où vous les avez réalisés. Supprimer un enregistrement de cet appareil ne supprime pas sa copie dans le cloud, et supprimer la copie dans le cloud ne supprime pas celle de cet appareil.`,
+Le stockage du navigateur est pratique, mais ce n’est pas une sauvegarde. Pour tout ce qui compte, téléchargez l’enregistrement et gardez le fichier en lieu sûr.`,
   },
   {
     id: 'what-leaves-your-device',
     title: 'Ce qui quitte votre appareil',
-    summary: 'Rien de ce que vous enregistrez, sauf si vous choisissez le cloud.',
+    summary: 'Rien de ce que vous enregistrez.',
     group: 'Confidentialité et sécurité',
-    body: `Votre micro, votre caméra et votre écran sont captés, enregistrés et sauvegardés par votre propre navigateur. Sauf si vous appuyez sur **Save to cloud** pour un enregistrement, rien n’est envoyé nulle part : ni audio, ni vidéo, ni aperçu, ni capture d’écran.
+    body: `Votre micro, votre caméra et votre écran sont captés, enregistrés et sauvegardés par votre propre navigateur. Rien n’est envoyé nulle part : ni audio, ni vidéo, ni aperçu, ni capture d’écran.
 
 L’application ne transcrit pas et n’analyse pas vos enregistrements, et elle ne comporte aucune reconnaissance vocale.
 
 ## Ce pour quoi l’application utilise internet
 
 - **Le chargement de l’application**, ainsi que les notes sur les nouveautés de chaque mise à jour.
-- **La connexion avec un Universal ID**, uniquement si vous le souhaitez. Vous pouvez enregistrer, convertir et télécharger sans compte.
-- **Une note indiquant que l’application a été ouverte**, envoyée une fois par visite si vous êtes connecté. Elle ne contient rien sur vos enregistrements.
-- **Un décompte anonyme des ouvertures quotidiennes** : la première fois que vous ouvrez l’application chaque jour, après votre premier clic ou votre première frappe au clavier, elle envoie le nom de l’application et le type de plateforme (« web »). Aucun identifiant, aucun compte et rien sur ce que vous faites. Une marque « déjà compté aujourd’hui » reste sur cet appareil et n’est jamais envoyée.
-- **Les enregistrements dans le cloud**, uniquement lorsque vous en demandez un, comme décrit dans l’article consacré au cloud.
 
 ## Convertir les formats
 

@@ -141,50 +141,20 @@ Pode eliminar qualquer gravação da lista, ou usar **Delete all** (eliminar tud
 
 ## Guardar uma cópia em segurança
 
-O armazenamento do browser é prático, mas não é uma cópia de segurança. Para tudo o que for importante, transfira a gravação e guarde o ficheiro num local seguro. Se tiver sessão iniciada com um Universal ID, também pode manter uma gravação online, como explica o artigo sobre guardar na nuvem.`,
-  },
-  {
-    id: 'saving-to-the-cloud',
-    title: 'Guardar uma gravação na nuvem',
-    summary: 'A única forma, opcional, de uma gravação sair do seu dispositivo.',
-    group: 'Privacidade e segurança',
-    body: `Gravar, converter e armazenar acontece tudo no seu dispositivo. Há apenas uma forma de uma gravação sair dele: carregar em **Save to cloud** (guardar na nuvem) nessa gravação. Se não o fizer, nada é enviado.
-
-## Como funciona
-
-- Tem de ter sessão iniciada com um Universal ID. Criar um é gratuito.
-- Guardar gravações na nuvem é gratuito com um Universal ID. As contas gratuitas têm um limite generoso: se algum dia o atingir, elimine uma gravação na nuvem de que já não precise. Se precisar de mais, diga-nos em unisim.co.uk/support.
-- Cada gravação guardada na nuvem está limitada a 50 MB. São horas de áudio, mas apenas alguns minutos de vídeo de ecrã, por isso as gravações de vídeo longas ficam só para transferir. O tamanho é verificado antes de o envio começar.
-- Se um envio falhar, não conta para o seu limite.
-
-## Quem lhe pode aceder
-
-A cópia na nuvem fica num armazenamento privado e não tem ligação pública. Só você lhe pode aceder, iniciando sessão com o Universal ID em que a guardou. Se o seu Universal ID pertencer a uma empresa com outras pessoas, cada gravação na nuvem tem uma caixa **Share with** no painel **In the cloud**. Começa desmarcada. Marque-a e todas as pessoas da sua empresa poderão reproduzir e transferir essa gravação, mas só você a poderá eliminar. Desmarque-a para que volte a ser privada. Circula de e para o armazenamento através de uma ligação cifrada.
-
-## Usar noutro dispositivo
-
-Depois de uma gravação estar na nuvem, pode iniciar sessão noutro dispositivo e ouvi-la ou transferi-la a partir do painel **In the cloud** (na nuvem). Fica lá até a eliminar.
-
-## O que não é
-
-Guardar na nuvem é guardar a cópia de uma gravação, não sincronizar toda a sua biblioteca. As outras gravações ficam no dispositivo onde as fez. Eliminar uma gravação deste dispositivo não elimina a cópia na nuvem, e eliminar a cópia na nuvem não elimina a deste dispositivo.`,
+O armazenamento do browser é prático, mas não é uma cópia de segurança. Para tudo o que for importante, transfira a gravação e guarde o ficheiro num local seguro.`,
   },
   {
     id: 'what-leaves-your-device',
     title: 'O que sai do seu dispositivo',
-    summary: 'Nada do que grava, a não ser que opte por guardar na nuvem.',
+    summary: 'Nada do que grava.',
     group: 'Privacidade e segurança',
-    body: `O microfone, a câmara e o ecrã são captados, gravados e guardados pelo seu próprio browser. A não ser que carregue em **Save to cloud** numa gravação, nada é enviado para lado nenhum: nem áudio, nem vídeo, nem pré-visualização, nem captura de ecrã.
+    body: `O microfone, a câmara e o ecrã são captados, gravados e guardados pelo seu próprio browser. Nada é enviado para lado nenhum: nem áudio, nem vídeo, nem pré-visualização, nem captura de ecrã.
 
 A aplicação não transcreve nem analisa as suas gravações, e não tem reconhecimento de voz.
 
 ## Para que é que a aplicação usa a internet
 
 - **Carregar a aplicação**, e as notas sobre o que mudou em cada atualização.
-- **Iniciar sessão com um Universal ID**, apenas se quiser. Pode gravar, converter e transferir sem conta.
-- **Uma nota de que a aplicação foi aberta**, enviada uma vez por visita se tiver sessão iniciada. Não inclui nada sobre as suas gravações.
-- **Uma contagem anónima de aberturas diárias**: na primeira vez que abre a aplicação em cada dia, depois do seu primeiro clique ou da primeira tecla premida, envia o nome da aplicação e o tipo de plataforma («web»). Nenhum identificador, nenhuma conta e nada sobre o que faz. Uma marca de «já contado hoje» fica neste dispositivo e nunca é enviada.
-- **Gravações guardadas na nuvem**, apenas quando pede uma, como descrito no artigo sobre guardar na nuvem.
 
 ## Converter formatos
 

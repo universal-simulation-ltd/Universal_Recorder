@@ -141,50 +141,20 @@ Listeden istediğiniz kaydı silebilir ya da önce onay isteyen **Delete all** (
 
 ## Bir kopyayı güvende tutmak
 
-Tarayıcı depolaması kullanışlıdır ama bir yedek değildir. Önemli olan her şeyi indirin ve dosyayı güvenli bir yerde saklayın. Universal ID ile oturum açtıysanız, buluta kaydetme makalesinde açıklandığı gibi bir kaydı çevrimiçi de tutabilirsiniz.`,
-  },
-  {
-    id: 'saving-to-the-cloud',
-    title: 'Bir kaydı buluta kaydetmek',
-    summary: 'Bir kaydın cihazınızdan çıkabilmesinin isteğe bağlı tek yolu.',
-    group: 'Gizlilik ve güvenlik',
-    body: `Kaydetme, dönüştürme ve saklama işlemlerinin tümü cihazınızda gerçekleşir. Bir kaydın cihazınızdan çıkmasının tek bir yolu vardır: o kayıtta **Save to cloud** (buluta kaydet) düğmesine basmak. Siz basmadıkça hiçbir şey yüklenmez.
-
-## Nasıl çalışır
-
-- Universal ID ile oturum açmış olmanız gerekir. Oluşturmak ücretsizdir.
-- Kayıtları buluta kaydetmek Universal ID ile ücretsizdir. Ücretsiz hesapların cömert bir sınırı vardır; bir gün bu sınıra ulaşırsanız artık ihtiyacınız olmayan bir bulut kaydını silin. Daha fazlasına ihtiyacınız olursa unisim.co.uk/support adresinden bize bildirin.
-- Her bulut kaydı 50 MB ile sınırlıdır. Bu, saatlerce ses ama yalnızca birkaç dakikalık ekran videosu demektir; bu yüzden uzun video kayıtları yalnızca indirilebilir. Boyut, yükleme başlamadan önce kontrol edilir.
-- Bir yükleme başarısız olursa sınırınızdan sayılmaz.
-
-## Kimler erişebilir
-
-Buluttaki kopya özel bir depolama alanında tutulur ve herkese açık bir bağlantısı yoktur. Ona yalnızca siz, kaydettiğiniz Universal ID ile oturum açarak erişebilirsiniz. Universal ID'niz başka kişilerin de bulunduğu bir şirkete aitse, **In the cloud** panelindeki her bulut kaydında bir **Share with** kutusu bulunur. Kutu başta işaretsizdir. İşaretlerseniz şirketinizdeki herkes o kaydı oynatıp indirebilir, ancak yalnızca siz silebilirsiniz. Kaydı yeniden özel yapmak için işareti kaldırın. Depolama alanına gidip gelirken şifreli bir bağlantı kullanılır.
-
-## Başka bir cihazdan kullanmak
-
-Bir kayıt buluta alındıktan sonra, başka bir cihazda oturum açıp **In the cloud** (bulutta) panelinden onu dinleyebilir ya da indirebilirsiniz. Siz silene kadar orada kalır.
-
-## Ne olmadığı
-
-Buluta kaydetmek, tüm kitaplığınızın eşitlenmesi değil, tek bir kaydın kopyasıdır. Diğer kayıtlarınız, onları yaptığınız cihazda kalır. Bu cihazdan bir kaydı silmek buluttaki kopyasını silmez; buluttaki kopyayı silmek de bu cihazdakini silmez.`,
+Tarayıcı depolaması kullanışlıdır ama bir yedek değildir. Önemli olan her şeyi indirin ve dosyayı güvenli bir yerde saklayın.`,
   },
   {
     id: 'what-leaves-your-device',
     title: 'Cihazınızdan neler çıkar',
-    summary: 'Buluta kaydetmeyi seçmediğiniz sürece kaydettiğiniz hiçbir şey.',
+    summary: 'Kaydettiğiniz hiçbir şey.',
     group: 'Gizlilik ve güvenlik',
-    body: `Mikrofonunuz, kameranız ve ekranınız kendi tarayıcınız tarafından yakalanır, kaydedilir ve saklanır. Bir kayıtta **Save to cloud** düğmesine basmadığınız sürece hiçbiri hiçbir yere gönderilmez: ne ses, ne video, ne önizleme ne de ekran görüntüsü.
+    body: `Mikrofonunuz, kameranız ve ekranınız kendi tarayıcınız tarafından yakalanır, kaydedilir ve saklanır. Hiçbiri hiçbir yere gönderilmez: ne ses, ne video, ne önizleme ne de ekran görüntüsü.
 
 Uygulama kayıtlarınızı yazıya dökmez ya da analiz etmez ve konuşma tanıma özelliği yoktur.
 
 ## Uygulama interneti ne için kullanır
 
 - **Uygulamanın yüklenmesi** ve her güncellemede nelerin değiştiğine dair notlar.
-- **Universal ID ile oturum açma**, yalnızca siz isterseniz. Hesap olmadan kaydedebilir, dönüştürebilir ve indirebilirsiniz.
-- **Uygulamanın açıldığına dair bir not**, oturum açtıysanız ziyaret başına bir kez gönderilir. Kayıtlarınızla ilgili hiçbir şey içermez.
-- **Anonim bir günlük açılış sayımı**: uygulamayı her gün ilk açışınızda, ilk tıklamanızdan veya tuşa basmanızdan sonra uygulamanın adını ve platform türünü ("web") gönderir. Hiçbir tanımlayıcı, hesap ya da ne yaptığınıza dair bir şey yoktur. "Bugün sayıldı" işareti bu cihazda kalır ve asla gönderilmez.
-- **Bulut kayıtları**, yalnızca siz istediğinizde; buluta kaydetme makalesinde açıklandığı gibi.
 
 ## Biçim dönüştürme
 

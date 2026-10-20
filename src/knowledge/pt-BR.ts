@@ -141,50 +141,20 @@ Você pode excluir qualquer gravação da lista ou usar **Delete all** (excluir 
 
 ## Guardar uma cópia com segurança
 
-O armazenamento do navegador é prático, mas não é um backup. Para tudo o que importa, baixe a gravação e guarde o arquivo num lugar seguro. Se você entrou com um Universal ID, também pode manter uma gravação on-line, como explica o artigo sobre salvar na nuvem.`,
-  },
-  {
-    id: 'saving-to-the-cloud',
-    title: 'Salvar uma gravação na nuvem',
-    summary: 'O único jeito, opcional, de uma gravação sair do seu aparelho.',
-    group: 'Privacidade e segurança',
-    body: `Gravar, converter e armazenar acontecem no seu aparelho. Existe um único jeito de uma gravação sair dele: apertar **Save to cloud** (salvar na nuvem) nessa gravação. Nada é enviado se você não fizer isso.
-
-## Como funciona
-
-- Você precisa ter entrado com um Universal ID. Criar um é grátis.
-- Salvar gravações na nuvem é grátis com um Universal ID. Contas gratuitas têm um limite generoso: se algum dia você chegar a ele, exclua uma gravação na nuvem de que não precisa mais. Se precisar de mais, fale com a gente em unisim.co.uk/support.
-- Cada gravação salva na nuvem pode ter no máximo 50 MB. Isso dá horas de áudio, mas só alguns minutos de vídeo de tela, então gravações de vídeo longas ficam apenas para download. O tamanho é conferido antes de o envio começar.
-- Se um envio falhar, ele não conta para o seu limite.
-
-## Quem pode acessar
-
-A cópia na nuvem fica num armazenamento privado e não tem link público. Só você pode acessá-la, fazendo login com o Universal ID em que a salvou. Se o seu Universal ID pertence a uma empresa com outras pessoas, cada gravação na nuvem tem uma caixa **Share with** no painel **In the cloud**. Ela começa desmarcada. Marque-a e todos na sua empresa poderão reproduzir e baixar essa gravação, mas só você poderá excluí-la. Desmarque-a para que ela volte a ser privada. Ela vai e volta do armazenamento por uma conexão criptografada.
-
-## Usar em outro aparelho
-
-Depois que uma gravação está na nuvem, você pode entrar em outro aparelho e ouvi-la ou baixá-la no painel **In the cloud** (na nuvem). Ela fica lá até você excluí-la.
-
-## O que não é
-
-Salvar na nuvem é guardar a cópia de uma gravação, não sincronizar toda a sua biblioteca. As suas outras gravações ficam no aparelho onde foram feitas. Excluir uma gravação deste aparelho não exclui a cópia na nuvem, e excluir a cópia na nuvem não exclui a deste aparelho.`,
+O armazenamento do navegador é prático, mas não é um backup. Para tudo o que importa, baixe a gravação e guarde o arquivo num lugar seguro.`,
   },
   {
     id: 'what-leaves-your-device',
     title: 'O que sai do seu aparelho',
-    summary: 'Nada do que você grava, a não ser que escolha salvar na nuvem.',
+    summary: 'Nada do que você grava.',
     group: 'Privacidade e segurança',
-    body: `O seu microfone, a sua câmera e a sua tela são captados, gravados e salvos pelo seu próprio navegador. A não ser que você aperte **Save to cloud** numa gravação, nada é enviado para lugar algum: nem áudio, nem vídeo, nem prévia, nem captura de tela.
+    body: `O seu microfone, a sua câmera e a sua tela são captados, gravados e salvos pelo seu próprio navegador. Nada é enviado para lugar algum: nem áudio, nem vídeo, nem prévia, nem captura de tela.
 
 O aplicativo não transcreve nem analisa as suas gravações, e não tem reconhecimento de voz.
 
 ## Para que o aplicativo usa a internet
 
 - **Carregar o aplicativo**, e as notas sobre o que mudou em cada atualização.
-- **Entrar com um Universal ID**, só se você quiser. Dá para gravar, converter e baixar sem conta.
-- **Um aviso de que o aplicativo foi aberto**, enviado uma vez por visita se você estiver conectado. Ele não inclui nada sobre as suas gravações.
-- **Uma contagem anônima de aberturas diárias**: na primeira vez que você abre o aplicativo a cada dia, depois do seu primeiro clique ou tecla pressionada, ele envia o nome do aplicativo e o tipo de plataforma ("web"). Nenhum identificador, nenhuma conta e nada sobre o que você faz. Uma marca de "já contado hoje" fica neste aparelho e nunca é enviada.
-- **Gravações salvas na nuvem**, só quando você pede, como descrito no artigo sobre salvar na nuvem.
 
 ## Converter formatos
 

@@ -12,7 +12,7 @@
 // It is not a style rule. The key IS every user's saved choice: change it and
 // everybody who chose dark is silently back on light.
 //
-// Plain Node (no test runner), in the same style as `hostedPath.test.mjs`.
+// Plain Node (no test runner), in the same style as `countdownPrefs.test.mjs`.
 
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'

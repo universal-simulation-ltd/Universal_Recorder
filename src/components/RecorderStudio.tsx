@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import RecordingPlayer from './RecordingPlayer'
-import CloudRecordings from './CloudRecordings'
 import { AudioRecorder, listCameras, listMicrophones } from '../lib/recorder'
 import { FORMAT_META, toFormat } from '../lib/encode'
 import { CONTAINER } from '../lib/layout'
 import { clearRecordings, deleteRecording, listRecordings, saveRecording } from '../lib/localRecordings'
-import { MAX_CLOUD_BYTES, fmtBytes } from '../lib/hostedRecordings'
-import { useCloud, type Cloud } from '../lib/useCloud'
 import type { ExportFormat, PipPosition, PipShape, PipSize, Source, StoredRecording, WebcamOverlay } from '../lib/types'
 import OverlayDesigner from './OverlayDesigner'
 import { useThemeStore } from '../stores/themeStore'
@@ -213,61 +210,6 @@ function Visualizer({ level, active }: { level: number; active: boolean }) {
   )
 }
 
-// "Save to cloud" for one on-device recording — the sibling of the download
-// buttons it sits next to. A guest gets the create-a-Universal-ID dialog; a
-// signed-in ID with no company gets the set-up-a-company notice; anyone else
-// spends this app's reusable token (returned when the cloud copy is deleted).
-// `size` matches the two rows it appears in: the result card's download
-// buttons and the compact recents rows.
-function SaveToCloudButton({
-  rec,
-  cloud,
-  size = 'sm',
-}: {
-  rec: StoredRecording
-  cloud: Cloud
-  size?: 'sm' | 'md'
-}) {
-  const saving = cloud.busyId === rec.id
-  const saved = cloud.savedId === rec.id
-  const stored = cloud.isStored(rec)
-  const tooBig = cloud.tooBig(rec)
-  const cls =
-    size === 'md'
-      ? 'rounded-lg border px-3 py-2 text-sm font-medium'
-      : 'rounded-md border px-2 py-1 text-xs font-medium'
-
-  return (
-    <button
-      type="button"
-      onClick={() => void cloud.save(rec)}
-      disabled={saving || stored || (tooBig && cloud.signedIn && !cloud.noCompany)}
-      title={
-        !cloud.signedIn
-          ? 'Create a Universal ID to save recordings to the cloud for FREE.'
-          : cloud.noCompany
-            ? 'Cloud recordings are kept with your company, and your Universal ID doesn’t have one yet.'
-            : stored
-              ? 'Already saved to the cloud'
-              : tooBig
-                ? `Too large for a cloud save (${fmtBytes(rec.blob.size)} — the limit is ${fmtBytes(MAX_CLOUD_BYTES)}). Download it instead.`
-                : 'Save to the cloud against your Universal ID'
-      }
-      className={[
-        cls,
-        // Pushed to the far right of the button row, away from the downloads —
-        // it's the one action here that leaves the device.
-        'ml-auto transition-colors disabled:cursor-not-allowed',
-        stored || saved
-          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-          : 'border-orange-300 bg-orange-50 text-orange-700 hover:border-orange-500 hover:bg-orange-100 disabled:opacity-60 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300 dark:hover:border-orange-500 dark:hover:bg-orange-900/40',
-      ].join(' ')}
-    >
-      {saving ? 'Saving…' : saved || stored ? '☁ In the cloud' : '☁ Save to cloud'}
-    </button>
-  )
-}
-
 export default function RecorderStudio({ onBusyChange }: {
   /** True while a recording is starting, counting down, running or paused —
       App withholds its Reset to defaults then, as Compress/Converter do. */
@@ -336,10 +278,6 @@ export default function RecorderStudio({ onBusyChange }: {
   // Two-step guard on Delete all: the blobs are local-only, so there is nothing
   // to restore them from.
   const [confirmingClearAll, setConfirmingClearAll] = useState(false)
-  // Opt-in "Hosted by UNI·SIM" cloud copies. One hook instance shared by the
-  // Save-to-cloud buttons and the "In the cloud" panel, so they agree on the
-  // token state and the cloud list.
-  const cloud = useCloud()
 
   const recorderRef = useRef<AudioRecorder | null>(null)
   const tickRef = useRef<number | null>(null)
@@ -670,7 +608,7 @@ export default function RecorderStudio({ onBusyChange }: {
         void refreshRecents()
         keepStorageIfAllowed()
       } catch {
-        setWarning('This recording is too big to keep on this device, so it won’t be in your list. Download it now, or save it to the cloud, before you start another.')
+        setWarning('This recording is too big to keep on this device, so it won’t be in your list. Download it now, before you start another.')
       }
     } catch (err) {
       setError((err as Error).message || 'Could not finish the recording.')
@@ -764,7 +702,7 @@ export default function RecorderStudio({ onBusyChange }: {
         <p className="mt-3 text-slate-600 max-w-xl mx-auto dark:text-slate-300">
           Capture your microphone, your system audio, your screen and your webcam — pick any
           combination — then save it. Recordings are kept in this browser, on this device; nothing
-          is uploaded unless you deliberately save one to the cloud.
+          is uploaded.
         </p>
       </header>
 
@@ -1262,7 +1200,6 @@ export default function RecorderStudio({ onBusyChange }: {
                   </button>
                 ))
               )}
-              <SaveToCloudButton rec={current} cloud={cloud} size="md" />
             </div>
           </div>
         </section>
@@ -1382,17 +1319,12 @@ export default function RecorderStudio({ onBusyChange }: {
                       </button>
                     ))
                   )}
-                  <SaveToCloudButton rec={r} cloud={cloud} />
                 </div>
               </li>
             ))}
           </ul>
         </section>
       )}
-
-      {/* Cloud copies — always rendered, so a guest can find the invitation to
-          create a Universal ID even before their first recording. */}
-      <CloudRecordings cloud={cloud} onLevel={setPlaybackLevel} onPlayingChange={setPlaying} />
     </div>
   )
 }

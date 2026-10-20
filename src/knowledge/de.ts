@@ -141,50 +141,20 @@ Sie können jede Aufnahme aus der Liste löschen oder **Delete all** (alle lösc
 
 ## Eine Kopie sicher aufbewahren
 
-Der Browserspeicher ist praktisch, aber keine Sicherung. Laden Sie alles, was Ihnen wichtig ist, herunter und bewahren Sie die Datei an einem sicheren Ort auf. Wenn Sie mit einer Universal ID angemeldet sind, können Sie eine Aufnahme auch online behalten, wie der Artikel zum Speichern in der Cloud erklärt.`,
-  },
-  {
-    id: 'saving-to-the-cloud',
-    title: 'Eine Aufnahme in der Cloud speichern',
-    summary: 'Der einzige, freiwillige Weg, auf dem eine Aufnahme Ihr Gerät verlassen kann.',
-    group: 'Datenschutz und Sicherheit',
-    body: `Aufnehmen, Umwandeln und Speichern geschehen alle auf Ihrem Gerät. Es gibt genau einen Weg, auf dem eine Aufnahme es verlassen kann: indem Sie bei dieser Aufnahme auf **Save to cloud** (in der Cloud speichern) drücken. Ohne das wird nichts hochgeladen.
-
-## So funktioniert es
-
-- Sie müssen mit einer Universal ID angemeldet sein. Die Erstellung ist kostenlos.
-- Aufnahmen in der Cloud zu speichern ist mit einer Universal ID kostenlos. Kostenlose Konten haben ein großzügiges Limit – sollten Sie es einmal erreichen, löschen Sie eine Cloud-Aufnahme, die Sie nicht mehr brauchen. Wenn Sie mehr brauchen, sagen Sie es uns unter unisim.co.uk/support.
-- Jede Speicherung in der Cloud ist auf 50 MB begrenzt. Das sind Stunden an Audio, aber nur wenige Minuten Bildschirmvideo. Lange Videoaufnahmen können daher nur heruntergeladen werden. Die Größe wird geprüft, bevor der Upload beginnt.
-- Schlägt ein Upload fehl, wird er nicht auf Ihr Limit angerechnet.
-
-## Wer darauf zugreifen kann
-
-Die Cloud-Kopie liegt in einem privaten Speicher und hat keinen öffentlichen Link. Nur Sie können darauf zugreifen, wenn Sie sich mit der Universal ID anmelden, mit der Sie sie gespeichert haben. Gehört Ihre Universal ID zu einem Unternehmen mit weiteren Personen, hat jede Cloud-Aufnahme im Bereich **In the cloud** ein Kästchen **Share with**. Es ist anfangs nicht angehakt. Haken Sie es an, kann jede Person in Ihrem Unternehmen die Aufnahme abspielen und herunterladen, löschen können aber nur Sie. Entfernen Sie den Haken, ist die Aufnahme wieder privat. Die Übertragung zum Speicher und zurück erfolgt über eine verschlüsselte Verbindung.
-
-## Von einem anderen Gerät aus nutzen
-
-Sobald eine Aufnahme in der Cloud liegt, können Sie sich auf einem anderen Gerät anmelden und sie im Bereich **In the cloud** (in der Cloud) abspielen oder herunterladen. Sie bleibt dort, bis Sie sie löschen.
-
-## Was es nicht ist
-
-Eine Cloud-Speicherung ist die Kopie einer einzelnen Aufnahme, keine Synchronisierung Ihrer ganzen Sammlung. Ihre übrigen Aufnahmen bleiben auf dem Gerät, auf dem Sie sie gemacht haben. Wenn Sie eine Aufnahme auf diesem Gerät löschen, bleibt ihre Cloud-Kopie erhalten, und wenn Sie die Cloud-Kopie löschen, bleibt die Aufnahme auf diesem Gerät erhalten.`,
+Der Browserspeicher ist praktisch, aber keine Sicherung. Laden Sie alles, was Ihnen wichtig ist, herunter und bewahren Sie die Datei an einem sicheren Ort auf.`,
   },
   {
     id: 'what-leaves-your-device',
     title: 'Was Ihr Gerät verlässt',
-    summary: 'Nichts, was Sie aufnehmen, es sei denn, Sie speichern es in der Cloud.',
+    summary: 'Nichts, was Sie aufnehmen.',
     group: 'Datenschutz und Sicherheit',
-    body: `Mikrofon, Kamera und Bildschirm werden von Ihrem eigenen Browser erfasst, aufgenommen und gespeichert. Solange Sie bei einer Aufnahme nicht auf **Save to cloud** drücken, wird nichts davon irgendwohin gesendet: kein Ton, kein Video, keine Vorschau und kein Bildschirmfoto.
+    body: `Mikrofon, Kamera und Bildschirm werden von Ihrem eigenen Browser erfasst, aufgenommen und gespeichert. Nichts davon wird irgendwohin gesendet: kein Ton, kein Video, keine Vorschau und kein Bildschirmfoto.
 
 Die App transkribiert oder analysiert Ihre Aufnahmen nicht und hat keine Spracherkennung.
 
 ## Wofür die App das Internet nutzt
 
 - **Das Laden der App** sowie die Hinweise, was sich mit jedem Update geändert hat.
-- **Die Anmeldung mit einer Universal ID**, nur wenn Sie es wünschen. Aufnehmen, Umwandeln und Herunterladen funktionieren ohne Konto.
-- **Ein Hinweis, dass die App geöffnet wurde**, einmal pro Besuch, wenn Sie angemeldet sind. Er enthält nichts über Ihre Aufnahmen.
-- **Eine anonyme Zählung der täglichen Öffnungen**: Beim ersten Öffnen der App an jedem Tag, nach Ihrem ersten Klick oder Tastendruck, sendet sie den Namen der App und die Art der Plattform („web“). Keine Kennung, kein Konto und nichts darüber, was Sie tun. Eine Markierung „heute schon gezählt“ bleibt auf diesem Gerät und wird nie gesendet.
-- **Speicherungen in der Cloud**, nur wenn Sie eine anfordern, wie im Artikel zum Speichern in der Cloud beschrieben.
 
 ## Formate umwandeln
 

@@ -141,50 +141,20 @@ You can delete any recording from the list, or use **Delete all**, which asks yo
 
 ## Keeping a copy safe
 
-Browser storage is convenient, but it is not a backup. For anything that matters, download it and keep the file somewhere safe. If you are signed in with a Universal ID, you can also keep a recording online, as the article on saving to the cloud explains.`,
-  },
-  {
-    id: 'saving-to-the-cloud',
-    title: 'Saving a recording to the cloud',
-    summary: 'The one optional way a recording can leave your device.',
-    group: 'Privacy and security',
-    body: `Recording, converting and storing all happen on your device. There is exactly one way a recording can leave it: pressing **Save to cloud** on that recording. Nothing is uploaded unless you do.
-
-## How it works
-
-- You need to be signed in with a Universal ID. Creating one is free.
-- Saving recordings to the cloud is free with a Universal ID. Free accounts have a generous limit — if you ever reach it, delete a cloud recording you no longer need. If you need more, tell us at unisim.co.uk/support.
-- Each cloud save is limited to 50 MB. That is hours of audio but only a few minutes of screen video, so long video recordings stay download-only. The size is checked before the upload starts.
-- If an upload fails, it does not count towards your limit.
-
-## Who can reach it
-
-The cloud copy is kept in private storage and has no public link. Only you can reach it, by signing in with the Universal ID you saved it with. If your Universal ID belongs to a company with other people in it, each cloud recording has a **Share with** tick box in the **In the cloud** panel. It starts unticked. Tick it and everyone in your company can play and download that recording, but only you can delete it. Untick it to make the recording private again. It travels to and from storage over an encrypted connection.
-
-## Using it from another device
-
-Once a recording is in the cloud, you can sign in on another device and play or download it from the **In the cloud** panel. It stays there until you delete it.
-
-## What it is not
-
-A cloud save is a copy of one recording, not a sync of your whole library. Your other recordings stay on the device where you made them. Deleting a recording from this device does not delete its cloud copy, and deleting the cloud copy does not delete the one on this device.`,
+Browser storage is convenient, but it is not a backup. For anything that matters, download it and keep the file somewhere safe.`,
   },
   {
     id: 'what-leaves-your-device',
     title: 'What leaves your device',
-    summary: 'Nothing you record, unless you choose to save it to the cloud.',
+    summary: 'Nothing you record.',
     group: 'Privacy and security',
-    body: `Your microphone, camera and screen are captured, recorded and saved by your own browser. Unless you press **Save to cloud** on a recording, none of it is sent anywhere: no audio, no video, no preview and no screenshot.
+    body: `Your microphone, camera and screen are captured, recorded and saved by your own browser. None of it is sent anywhere: no audio, no video, no preview and no screenshot.
 
 The app does not transcribe or analyse your recordings, and it has no speech recognition.
 
 ## What the app does use the internet for
 
 - **Loading the app**, and the notes on what has changed in each update.
-- **Signing in with a Universal ID**, only if you choose to. You can record, convert and download without an account.
-- **A note that the app was opened**, sent once per visit if you are signed in. It includes nothing about your recordings.
-- **An anonymous count of daily opens**: the first time you open the app each day, after your first click or key press, it sends the app's name and the kind of platform ("web"). No identifier, no account and nothing about what you do. A "counted today" mark stays on this device and is never sent.
-- **Cloud saves**, only when you ask for one, as described in the article on saving to the cloud.
 
 ## Converting formats
 

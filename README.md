@@ -4,8 +4,7 @@ Record in your browser — **microphone**, **system audio**, your **screen**, an
 **webcam** — in any combination. The webcam composites onto the screen as a
 picture-in-picture overlay. Save as **MP4/WebM** (screen/webcam) or **WebM/MP3/WAV**
 (audio-only). Local-first: recordings are captured, encoded and stored entirely on
-your device (IndexedDB) — nothing is uploaded unless you deliberately press
-**Save to cloud** on one.
+your device (IndexedDB) — nothing is uploaded. No sign-in.
 
 Part of the open-source **Universal Apps** family (sibling to Universal PDF /
 Images / QR / Signatures). Served at `opensource.unisim.co.uk/recorder`.
@@ -27,17 +26,6 @@ Images / QR / Signatures). Served at `opensource.unisim.co.uk/recorder`.
   (`lamejs`) transcoded on-device from the decoded audio.
 - **Local-first recents** — finished recordings are kept in IndexedDB; play,
   re-download in any format, or delete.
-- **Save to cloud** (opt-in) — the collapsible **In the cloud** panel sits under
-  *On this device*. A guest is invited to create a free Universal ID; a signed-in
-  user can push any on-device recording to the shared `hosted-uploads` bucket for
-  one reusable **Recorder** token, then play it back, download it, or delete it —
-  deleting returns the token. Private to the saver unless they tick **Share with
-  <company>** on it (only offered in a workspace with other people). Backend: `@unisim/sdk` hosted helpers +
-  `hosted_consume_and_record` / `hosted_refund_and_delete` (universal-platform
-  migrations 0041, 0045, 0095, 0194). Cloud saves are capped at **50 MB** per file
-  (the bucket limit, and the Supabase Free-plan project ceiling) — hours of
-  Opus audio, but only a couple of minutes of screen video, so long captures
-  stay download-only.
 
 ## Develop
 
@@ -60,18 +48,12 @@ it falls back to the git short SHA (or `dev`).
 
 The full, checkable account is in [PRIVACY.md](PRIVACY.md).
 
-Recording, compositing, encoding and storage all run client-side, and that is the
-only path a guest ever uses. There is exactly **one** upload path and it is
-explicit: pressing **Save to cloud** on a recording, while signed in with a
-Universal ID, uploads that recording's blob to the private `hosted-uploads`
-bucket. Nothing else — no preview, no screen still, no webcam frame, no
-telemetry about the audio — leaves the browser. Deleting the cloud copy removes
-the object and returns the token.
+Recording, compositing, encoding and storage all run client-side, and nothing
+— no recording, no preview, no screen still, no webcam frame, no telemetry about
+the audio — leaves the browser. A recording leaves your device only when you
+download it.
 
-A cloud copy is **private to the person who saved it** (universal-platform
-migration 0194, 2026-09-28). When the saver's workspace has other people in it,
-each of their cloud recordings shows a **Share with <company>** tick box,
-unticked by default; ticking it lets everyone in that workspace play and
-download the recording (never delete it), and unticking makes it private again.
-The rule is enforced in the database — on the `hosted_uploads` row and on the
-storage object — not just in the panel.
+There is no sign-in (`noAccounts: true` in `src/main.tsx`, 2026-10-20). Signing
+in only ever unlocked an opt-in "Save to cloud" (one recording in the shared
+`hosted-uploads` bucket, optionally shared with a company); that was removed at
+the same time, with no Recorder cloud recordings on prod to strand.

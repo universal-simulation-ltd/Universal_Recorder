@@ -141,50 +141,20 @@ Puoi eliminare qualsiasi registrazione dall’elenco, oppure usare **Delete all*
 
 ## Tenere una copia al sicuro
 
-Lo spazio del browser è comodo, ma non è un backup. Per tutto ciò che conta, scaricalo e conserva il file in un posto sicuro. Se hai effettuato l’accesso con un Universal ID, puoi anche tenere una registrazione online, come spiega l’articolo sul salvataggio nel cloud.`,
-  },
-  {
-    id: 'saving-to-the-cloud',
-    title: 'Salvare una registrazione nel cloud',
-    summary: 'L’unico modo, facoltativo, in cui una registrazione può lasciare il dispositivo.',
-    group: 'Privacy e sicurezza',
-    body: `Registrare, convertire e archiviare avvengono tutti sul tuo dispositivo. C’è un solo modo in cui una registrazione può lasciarlo: premere **Save to cloud** (salva nel cloud) su quella registrazione. Se non lo fai, non viene caricato nulla.
-
-## Come funziona
-
-- Devi aver effettuato l’accesso con un Universal ID. Crearne uno è gratuito.
-- Salvare le registrazioni nel cloud è gratuito con un Universal ID. Gli account gratuiti hanno un limite generoso: se mai lo raggiungi, elimina una registrazione nel cloud che non ti serve più. Se ti serve di più, faccelo sapere su unisim.co.uk/support.
-- Ogni salvataggio nel cloud è limitato a 50 MB. Sono ore di audio ma solo pochi minuti di video dello schermo, quindi le registrazioni video lunghe restano solo da scaricare. La dimensione viene controllata prima che inizi il caricamento.
-- Se un caricamento non va a buon fine, non viene conteggiato nel tuo limite.
-
-## Chi può accedervi
-
-La copia nel cloud è conservata in uno spazio privato e non ha un link pubblico. Solo tu puoi raggiungerla, accedendo con l’Universal ID con cui l’hai salvata. Se il tuo Universal ID appartiene a un’azienda con altre persone, ogni registrazione nel cloud ha una casella **Share with** nel pannello **In the cloud**. All’inizio non è spuntata. Spuntala e tutti nella tua azienda potranno riprodurre e scaricare quella registrazione, ma solo tu potrai eliminarla. Togli la spunta per renderla di nuovo privata. Viaggia da e verso lo spazio di archiviazione tramite una connessione cifrata.
-
-## Usarla da un altro dispositivo
-
-Quando una registrazione è nel cloud, puoi accedere da un altro dispositivo e riprodurla o scaricarla dal pannello **In the cloud** (nel cloud). Resta lì finché non la elimini.
-
-## Cosa non è
-
-Un salvataggio nel cloud è la copia di una sola registrazione, non una sincronizzazione di tutta la tua libreria. Le altre registrazioni restano sul dispositivo su cui le hai fatte. Eliminare una registrazione da questo dispositivo non elimina la sua copia nel cloud, ed eliminare la copia nel cloud non elimina quella su questo dispositivo.`,
+Lo spazio del browser è comodo, ma non è un backup. Per tutto ciò che conta, scaricalo e conserva il file in un posto sicuro.`,
   },
   {
     id: 'what-leaves-your-device',
     title: 'Cosa esce dal tuo dispositivo',
-    summary: 'Niente di ciò che registri, a meno che tu non scelga di salvarlo nel cloud.',
+    summary: 'Niente di ciò che registri.',
     group: 'Privacy e sicurezza',
-    body: `Microfono, fotocamera e schermo vengono catturati, registrati e salvati dal tuo browser. A meno che tu non prema **Save to cloud** su una registrazione, niente viene inviato da nessuna parte: né audio, né video, né anteprime, né screenshot.
+    body: `Microfono, fotocamera e schermo vengono catturati, registrati e salvati dal tuo browser. Niente viene inviato da nessuna parte: né audio, né video, né anteprime, né screenshot.
 
 L’app non trascrive e non analizza le tue registrazioni, e non ha alcun riconoscimento vocale.
 
 ## Per cosa l’app usa internet
 
 - **Il caricamento dell’app**, e le note sulle novità di ogni aggiornamento.
-- **L’accesso con un Universal ID**, solo se lo scegli. Puoi registrare, convertire e scaricare senza un account.
-- **Una nota che l’app è stata aperta**, inviata una volta per visita se hai effettuato l’accesso. Non contiene nulla sulle tue registrazioni.
-- **Un conteggio anonimo delle aperture quotidiane**: la prima volta che apri l’app ogni giorno, dopo il tuo primo clic o tasto premuto, invia il nome dell’app e il tipo di piattaforma («web»). Nessun identificativo, nessun account e niente su ciò che fai. Un segno «già contato oggi» resta su questo dispositivo e non viene mai inviato.
-- **I salvataggi nel cloud**, solo quando ne chiedi uno, come descritto nell’articolo sul salvataggio nel cloud.
 
 ## Convertire i formati
 

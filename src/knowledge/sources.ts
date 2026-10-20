@@ -12,15 +12,14 @@ import type { Source } from './types'
 // lib/encode.ts decodes with decodeAudioData and re-encodes on the device
 // with @unisim/media 0.4 (a 16-bit RIFF/WAVE writer, and 128 kbps MP3 through
 // @breezystack/lamejs); lib/localRecordings.ts keeps recordings in IndexedDB;
-// lib/hostedRecordings.ts uploads only on Save to cloud, to a private Supabase
-// Storage bucket over HTTPS. There is no speech recognition or analysis, so
-// nothing on those is cited.
+// nothing is uploaded (no sign-in or cloud saves since 2026-10-20). There is
+// no speech recognition or analysis, so nothing on those is cited.
 //
 // ⚠️ `pdf` (our hosted copy at opensource.unisim.co.uk/kb/papers/) ONLY where
 // the licence allows redistribution: the Opus paper (the authors' arXiv
 // version, released under CC BY 4.0) and RFC 9559. IEEE and AES papers link to
-// the DOI or a university's free copy; RFC 6716 and RFC 8446 have no
-// rfc-editor PDF, so they link the HTML.
+// the DOI or a university's free copy; RFC 6716 has no rfc-editor PDF, so
+// it links the HTML.
 
 const OPUS_RFC: Source = {
   kind: 'standard',
@@ -158,22 +157,6 @@ export const SOURCES: Record<string, Source[]> = {
       href: 'https://storage.spec.whatwg.org/',
     },
     LOCAL_FIRST,
-  ],
-  'saving-to-the-cloud': [
-    {
-      kind: 'standard',
-      title: 'The Transport Layer Security (TLS) Protocol Version 1.3 (RFC 8446)',
-      authors: 'Eric Rescorla',
-      publisher: 'IETF',
-      year: 2018,
-      href: 'https://www.rfc-editor.org/rfc/rfc8446.html',
-    },
-    {
-      kind: 'guidance',
-      title: 'Storage Access Control — the private bucket rules cloud saves sit behind',
-      publisher: 'Supabase',
-      href: 'https://supabase.com/docs/guides/storage/security/access-control',
-    },
   ],
   'what-leaves-your-device': [
     LOCAL_FIRST,

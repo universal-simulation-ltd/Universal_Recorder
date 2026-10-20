@@ -4,8 +4,7 @@ This page is written to be checked: every claim below names the file in this
 repository that makes it true, and you are welcome to go and read it.
 
 The short version: **your recording is captured, encoded and kept by your own
-browser.** It is not uploaded to us, and there is no copy of it on our servers
-unless you pressed **Save to cloud** on it.
+browser.** It is not uploaded to us, and there is never a copy of it on our servers.
 
 ---
 
@@ -32,61 +31,17 @@ in the same way.
 
 ---
 
-## The one way a recording *can* leave: Save to cloud
-
-**Save to cloud** keeps one recording online so you can play it or download it
-on another device. It needs a free Universal ID, and it only ever happens when
-you press the button on a recording.
-
-- **What is uploaded:** that recording's file, nothing else. No preview, no
-  screen still, no webcam frame. We also store a row that names the file, its
-  size and the account that saved it, so the **In the cloud** panel can list it.
-- **Where it goes:** a private bucket in Cloudflare R2, held in the EU, or (for
-  older saves) a private bucket in our Supabase storage. Each saved recording
-  remembers which.
-- **Who can see it:** only you. If your workspace has other people in it, each
-  cloud recording has a **Share with** tick box, unticked to start with.
-  Ticking it lets the people in that workspace play and download it (never
-  delete it). Unticking it makes it private again. The rule is enforced by the
-  database and the storage, not only by the app.
-- **How big:** up to 50 MB per recording. Larger recordings can only be
-  downloaded.
-- **Deleting it:** deleting the cloud copy removes the file and its row, and
-  gives you back the token it used.
-- The code: [`src/lib/hostedRecordings.ts`](src/lib/hostedRecordings.ts) and
-  [`src/components/CloudRecordings.tsx`](src/components/CloudRecordings.tsx).
-
-⚠️ **The cloud copy is ordinary cloud storage, not end-to-end encryption.** It
-is encrypted in transit and at rest, and access is limited as described above,
-but we hold the keys. So this is a promise about our conduct, not a
-mathematical guarantee.
-
----
-
-## What the app talks to a server for, even when your recording doesn't
+## What the app talks to a server for, even though your recording doesn't
 
 If you open your browser's Network tab you will see some requests. Here is
 what they are:
 
-- **Signing in.** Only if you choose to. A Universal ID gets you the suite's
-  shared account and settings, and Save to cloud. You can delete it from
-  inside the app: **Delete my account** at the foot of Global Tuning, in the
-  profile menu. That deletes it in every UNI·SIM app, not only this one.
-- **"You opened the app".** When you are signed in, the app records one event
-  saying the app was opened, so your account's activity page is accurate. It
-  says nothing about what you recorded. See `UsageTracker` in `@unisim/sdk`,
-  mounted in [`src/main.tsx`](src/main.tsx).
-- **An anonymous daily open count.** Once a day, the first time you open the
-  app (after your first click or key press), it adds one to that day's total
-  for this app. It sends the app's name and the kind of platform ("web") and
-  nothing else: no identifier, no account even if you are signed in, and
-  nothing about what you are recording. A "counted today" mark stays in your
-  browser and is never sent. The totals identify nobody and are kept
-  indefinitely. See `countDailyOpen` in `presence.ts` in `@unisim/sdk`
-  (Recorder is a website only and leaves `openCount` at its default, on). This
-  replaced the old "this app is in use" signal, a random install ID sent every
-  45 seconds, which `@unisim/sdk` 0.187.0 retired: no install ID is sent or
-  kept any more.
+- **No sign-in, and no open count.** The app has no sign-in (since
+  2026-10-20; it only ever unlocked "Save to cloud", which is gone too), and it
+  stays signed out even if your browser is signed in to UNI·SIM elsewhere.
+  With no sign-in, the suite's anonymous daily open count is off too, so
+  nothing records that you opened it. See `noAccounts` in
+  [`src/main.tsx`](src/main.tsx).
 - **The changelog and update notice**, which is just fetching a list of
   releases.
 

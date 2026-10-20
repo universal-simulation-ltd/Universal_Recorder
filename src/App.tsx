@@ -19,7 +19,8 @@ const REPO_URL = 'https://github.com/universal-simulation-ltd/Universal_Recorder
 const ABOUT: AboutAppConfig = {
   repo:    REPO_URL,
   subject: 'Your recording',
-  except:  'saving it to your account',
+  // Nothing ever leaves the device (no sign-in or cloud saves since 2026-10-20).
+  except:  null,
   headline: 'Other recorders upload your recording to their servers to process it.',
   version: __APP_VERSION__,
   credits,
