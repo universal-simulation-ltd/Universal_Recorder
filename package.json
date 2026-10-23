@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "credits": "node ../scripts/gen-credits.mjs . --repo https://github.com/universal-simulation-ltd/Universal_Recorder",
+    "test": "node scripts/run-unit-tests.mjs",
     "test:theme": "node scripts/theme.test.mjs",
     "test:countdown-prefs": "node --experimental-strip-types scripts/countdownPrefs.test.mjs"
   },
