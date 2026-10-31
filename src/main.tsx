@@ -12,13 +12,15 @@ console.log(`build: ${import.meta.env.VITE_BUILD_SHA}`)
 // that and downloading it. We still mount <UniversalProvider> so the shared
 // navbar works.
 //
-// No sign-in (James, 2026-10-20: no logins in first iterations unless they
-// improve the experience; Docs_UNI_SIM/login-free-plan.md). Signing in only
+// No account of its own (James, 2026-10-20: no logins in first iterations unless
+// they improve the experience; Docs_UNI_SIM/login-free-plan.md). Signing in only
 // ever unlocked "Save to cloud" (one recording in the shared `hosted-uploads`
 // bucket, optionally shared with a company); prod held no Recorder cloud
 // recordings when it was removed, so nothing was stranded. `noAccounts: true`
-// drops the account rows and keeps the app signed out of the suite session;
-// with it the SDK's anonymous open count is off too (SDK 0.187), as in Video,
+// drops the account rows; since SDK 0.211.0 it no longer keeps the app signed
+// out: a suite session the browser already holds is read and followed (Global
+// Tuning comes with it) and Tune this app offers a discreet Sign in. With it
+// the SDK's anonymous open count is off too (SDK 0.187), as in Video,
 // Charts, Beam and the rest. <UsageTracker> went with it — it only ever
 // recorded signed-in visits.
 //

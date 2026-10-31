@@ -9,7 +9,9 @@ composited onto the screen as a **picture-in-picture overlay** on a `<canvas>`
 (or recorded full-frame when no screen is shared). Screen/webcam captures save
 as **MP4/WebM**; audio-only saves as **WebM, MP3 or WAV**. Local-first:
 recordings are captured, encoded and stored entirely on-device (IndexedDB) and
-nothing is uploaded. There is no sign-in (`noAccounts: true`, 2026-10-20).
+nothing is uploaded. There is no account of its own (`noAccounts: true`,
+2026-10-20); since `@unisim/sdk` 0.211.0 a suite session the browser already
+holds is read and followed, and Tune this app offers a discreet Sign in.
 
 - **Live:** [opensource.unisim.co.uk/recorder](https://opensource.unisim.co.uk/recorder)
   — served by path via the `opensource-portal` Worker, which proxies
@@ -47,7 +49,7 @@ nothing is uploaded. There is no sign-in (`noAccounts: true`, 2026-10-20).
   recordings start straight away. The gate re-arms when the selected sources (or
   camera) change.
 
-- **No sign-in, no cloud (2026-10-20).** `noAccounts: true` in `src/main.tsx`
+- **No own accounts, no cloud (2026-10-20).** `noAccounts: true` in `src/main.tsx`
   (Docs_UNI_SIM/login-free-plan.md, bucket A). Signing in only ever unlocked
   the opt-in **Save to cloud** (2026-07-30 to 2026-10-20: one recording in the
   shared private `hosted-uploads` bucket for the per-app `recorder` token,

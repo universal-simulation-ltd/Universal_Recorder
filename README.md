@@ -4,7 +4,7 @@ Record in your browser — **microphone**, **system audio**, your **screen**, an
 **webcam** — in any combination. The webcam composites onto the screen as a
 picture-in-picture overlay. Save as **MP4/WebM** (screen/webcam) or **WebM/MP3/WAV**
 (audio-only). Local-first: recordings are captured, encoded and stored entirely on
-your device (IndexedDB) — nothing is uploaded. No sign-in.
+your device (IndexedDB) — nothing is uploaded. No account needed.
 
 Part of the open-source **Universal Apps** family (sibling to Universal PDF /
 Images / QR / Signatures). Served at `opensource.unisim.co.uk/recorder`.
@@ -53,7 +53,10 @@ Recording, compositing, encoding and storage all run client-side, and nothing
 the audio — leaves the browser. A recording leaves your device only when you
 download it.
 
-There is no sign-in (`noAccounts: true` in `src/main.tsx`, 2026-10-20). Signing
+There is no account of its own (`noAccounts: true` in `src/main.tsx`,
+2026-10-20); a UNI·SIM sign-in the browser already holds is recognised so your
+suite-wide settings come with you, and Tune this app offers a discreet Sign in
+(`@unisim/sdk` 0.211.0), but your recordings are never tied to it. Signing
 in only ever unlocked an opt-in "Save to cloud" (one recording in the shared
 `hosted-uploads` bucket, optionally shared with a company); that was removed at
 the same time, with no Recorder cloud recordings on prod to strand.

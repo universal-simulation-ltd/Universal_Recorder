@@ -36,11 +36,13 @@ in the same way.
 If you open your browser's Network tab you will see some requests. Here is
 what they are:
 
-- **No sign-in, and no open count.** The app has no sign-in (since
-  2026-10-20; it only ever unlocked "Save to cloud", which is gone too), and it
-  stays signed out even if your browser is signed in to UNI·SIM elsewhere.
-  With no sign-in, the suite's anonymous daily open count is off too, so
-  nothing records that you opened it. See `noAccounts` in
+- **No account of its own, and no open count.** Nothing in the app needs a
+  sign-in (since 2026-10-20; it only ever unlocked "Save to cloud", which is
+  gone too). If your browser is already signed in to UNI·SIM elsewhere, the
+  app recognises it so your suite-wide settings, such as colour scheme and
+  language, come with you, and Tune this app offers a discreet Sign in; your
+  recordings are never tied to it. The suite's anonymous daily open count is
+  off, so nothing records that you opened it. See `noAccounts` in
   [`src/main.tsx`](src/main.tsx).
 - **The changelog and update notice**, which is just fetching a list of
   releases.
