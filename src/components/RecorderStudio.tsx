@@ -846,7 +846,7 @@ export default function RecorderStudio({ onBusyChange }: {
                   type="button"
                   onClick={() => void handlePreview()}
                   disabled={previewing}
-                  className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-800 disabled:cursor-wait disabled:opacity-60"
+                  className="u-btn disabled:cursor-wait"
                 >
                   {previewing
                     ? 'Starting preview…'
@@ -872,9 +872,11 @@ export default function RecorderStudio({ onBusyChange }: {
             </>
           )}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <div className="flex items-center gap-2">
+            {/* min-w-0 / max-w-full: on a phone the four corners are wider than
+                the screen, so the tray scrolls sideways instead of the page. */}
+            <div className="flex min-w-0 max-w-full items-center gap-2">
               <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Overlay position</span>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="u-tabs min-w-0">
                 {PIP_POSITIONS.map(p => (
                   <button
                     key={p.id}
@@ -883,12 +885,7 @@ export default function RecorderStudio({ onBusyChange }: {
                     // takes over again.
                     onClick={() => { setPipPosition(p.id); setPipX(null); setPipY(null) }}
                     aria-pressed={pipPosition === p.id && pipX === null}
-                    className={[
-                      'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                      pipPosition === p.id && pipX === null
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300'
-                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-700',
-                    ].join(' ')}
+                    className="u-tab"
                   >
                     {p.label}
                   </button>
@@ -897,19 +894,14 @@ export default function RecorderStudio({ onBusyChange }: {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Size</span>
-              <div className="flex gap-1.5">
+              <div className="u-tabs">
                 {PIP_SIZES.map(sz => (
                   <button
                     key={sz.id}
                     type="button"
                     onClick={() => setPipSize(sz.id)}
                     aria-pressed={pipSize === sz.id}
-                    className={[
-                      'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                      pipSize === sz.id
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300'
-                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-700',
-                    ].join(' ')}
+                    className="u-tab"
                   >
                     {sz.label}
                   </button>
@@ -918,19 +910,14 @@ export default function RecorderStudio({ onBusyChange }: {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Shape</span>
-              <div className="flex gap-1.5">
+              <div className="u-tabs">
                 {PIP_SHAPES.map(sh => (
                   <button
                     key={sh.id}
                     type="button"
                     onClick={() => setPipShape(sh.id)}
                     aria-pressed={pipShape === sh.id}
-                    className={[
-                      'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                      pipShape === sh.id
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300'
-                        : 'border-slate-300 bg-white text-slate-600 hover:border-orange-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-700',
-                    ].join(' ')}
+                    className="u-tab"
                   >
                     {sh.label}
                   </button>
@@ -969,7 +956,7 @@ export default function RecorderStudio({ onBusyChange }: {
               type="button"
               onClick={() => void handlePreview()}
               disabled={previewing}
-              className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-800 disabled:cursor-wait disabled:opacity-60"
+              className="u-btn disabled:cursor-wait"
             >
               {previewing ? 'Starting preview…' : hasPreviewed ? '↻ Refresh preview' : '▶ Preview'}
             </button>
@@ -1123,9 +1110,10 @@ export default function RecorderStudio({ onBusyChange }: {
                 onClick={handleStart}
                 disabled={sources.length === 0 || starting || startBlockedByPreview}
                 title={startBlockedByPreview ? 'Press Preview first to check your camera / screen' : undefined}
-                className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-orange-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="u-btn u-btn--primary shrink-0"
               >
-                {starting ? 'Starting…' : '● Start recording'}
+                <span className="u-btn__key" aria-hidden>●</span>
+                {starting ? 'Starting…' : 'Start recording'}
               </button>
             </>
           )}
@@ -1163,9 +1151,10 @@ export default function RecorderStudio({ onBusyChange }: {
             <h2 className="font-semibold text-slate-900 dark:text-slate-100">Your recording — {fmtTime(current.durationSec)}</h2>
             <button
               onClick={handleNew}
-              className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-800"
+              className="u-btn u-btn--primary"
             >
-              ＋ New recording
+              <span className="u-btn__key" aria-hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg></span>
+              New recording
             </button>
           </div>
           {currentUrl && (
@@ -1183,9 +1172,10 @@ export default function RecorderStudio({ onBusyChange }: {
               {current.hasVideo ? (
                 <button
                   onClick={() => handleDownloadNative(current)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-orange-500"
+                  className="u-btn"
                 >
-                  ⬇ {nativeExt(current).toUpperCase()} video
+                  <span className="u-btn__key" aria-hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v12M7 11l5 5 5-5M5 20h14" /></svg></span>
+                  {nativeExt(current).toUpperCase()} video
                 </button>
               ) : (
                 AUDIO_FORMATS.map(f => (
@@ -1193,10 +1183,11 @@ export default function RecorderStudio({ onBusyChange }: {
                     key={f}
                     onClick={() => handleDownload(current, f)}
                     disabled={busyFormat !== null}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-orange-500 disabled:opacity-60 disabled:cursor-wait"
+                    className="u-btn disabled:cursor-wait"
                     title={FORMAT_META[f].hint}
                   >
-                    {busyFormat === `${current.id}:${f}` ? 'Encoding…' : `⬇ ${FORMAT_META[f].label}`}
+                    <span className="u-btn__key" aria-hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v12M7 11l5 5 5-5M5 20h14" /></svg></span>
+                    {busyFormat === `${current.id}:${f}` ? 'Encoding…' : FORMAT_META[f].label}
                   </button>
                 ))
               )}
@@ -1303,7 +1294,7 @@ export default function RecorderStudio({ onBusyChange }: {
                   {r.hasVideo ? (
                     <button
                       onClick={() => handleDownloadNative(r)}
-                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-500"
+                      className="u-btn u-btn--sm"
                     >
                       {nativeExt(r).toUpperCase()} video
                     </button>
@@ -1313,7 +1304,7 @@ export default function RecorderStudio({ onBusyChange }: {
                         key={f}
                         onClick={() => handleDownload(r, f)}
                         disabled={busyFormat !== null}
-                        className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-500 disabled:opacity-60 disabled:cursor-wait"
+                        className="u-btn u-btn--sm disabled:cursor-wait"
                       >
                         {busyFormat === `${r.id}:${f}` ? 'Encoding…' : FORMAT_META[f].label}
                       </button>
