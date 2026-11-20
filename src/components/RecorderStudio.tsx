@@ -826,8 +826,11 @@ export default function RecorderStudio({ onBusyChange }: {
 
       {/* Webcam overlay controls — a live drag-to-place preview plus the shape,
           position and size. All can be changed live while recording. */}
+      {/* Framing the camera before (and while) it records: the suite's
+          Viewfinder box (BRANDING.md → Boxes, D). All four corners stay muted
+          until something is in frame (a preview, or the take itself). */}
       {usesWebcam && canWebcam && (
-        <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className={`u-box u-box--frame ${hasPreviewed || live ? '' : 'u-box--empty'} mb-2 rounded-lg bg-white p-4 text-left dark:bg-slate-900`}>
           {!live && (
             <>
               <OverlayDesigner
@@ -935,8 +938,10 @@ export default function RecorderStudio({ onBusyChange }: {
 
       {/* Screen-only preview — confirm which screen/window will be captured
           (a frozen still, grabbed on demand) and satisfy the preview gate. */}
+      {/* A Viewfinder box (Boxes D): muted until a still of the screen is in
+          frame, then its leading corner lights. */}
       {!live && sources.includes('screen') && canScreen && !usesWebcam && (
-        <div className="mb-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className={`u-box u-box--frame ${screenShot ? '' : 'u-box--empty'} mb-2 rounded-lg bg-white p-4 text-left dark:bg-slate-900`}>
           <div
             className="relative mb-3 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700"
             style={{ aspectRatio: '16 / 9' }}
@@ -1017,9 +1022,12 @@ export default function RecorderStudio({ onBusyChange }: {
         </p>
       )}
 
-      {/* Transport — hidden entirely until a source is chosen */}
+      {/* Transport — hidden entirely until a source is chosen. It is where the
+          capturing happens (the live time and level), so it is the suite's
+          Viewfinder box (BRANDING.md → Boxes, D), its leading corner lit: a
+          source is chosen, so something is in frame. */}
       {sources.length > 0 && (
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="u-box u-box--frame rounded-lg bg-white p-6 dark:bg-slate-900">
         <div className="flex items-center justify-center gap-3">
           <span
             className={[
@@ -1145,10 +1153,16 @@ export default function RecorderStudio({ onBusyChange }: {
       )}
 
       {/* Result */}
+      {/* The finished take: a record carrying a value, so the suite's Key box
+          (BRANDING.md → Boxes, C), its neutral tab saying what it is. */}
       {status === 'done' && current && (
-        <section className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+        <section className="u-box u-box--key mt-6 border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <span className="u-box__key">Your recording</span>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-semibold text-slate-900 dark:text-slate-100">Your recording — {fmtTime(current.durationSec)}</h2>
+            <h2 className="min-w-0 font-semibold text-slate-900 dark:text-slate-100">
+              <span className="break-words">{current.name}</span>
+              <span className="font-normal tabular-nums text-slate-500 dark:text-slate-400"> · {fmtTime(current.durationSec)}</span>
+            </h2>
             <button
               onClick={handleNew}
               className="u-btn u-btn--primary"
